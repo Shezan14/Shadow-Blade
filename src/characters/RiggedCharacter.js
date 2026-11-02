@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 const loader = new GLTFLoader();
+const assetUrl = (path) => new URL(path, document.baseURI).toString();
 
 const PLAYER_CLIPS = Object.freeze({
   idle: 'Idle',
@@ -155,7 +156,7 @@ export class PlayerRiggedAnimator {
     this.attackSerial = -1;
     this.castSerial = -1;
     this.rig = new RiggedCharacter(player, {
-      url: '/models/kaykit/Rogue_Hooded.glb',
+      url: assetUrl('models/kaykit/Rogue_Hooded.glb'),
       kind: 'rogue',
       fallback: [player.userData.parts.visual],
       scale: 1.08,
@@ -195,7 +196,7 @@ export class PlayerRiggedAnimator {
 export function attachEnemyRig(enemy, kind = 'knight') {
   const file = kind === 'barbarian' ? 'Barbarian.glb' : 'Knight.glb';
   const rig = new RiggedCharacter(enemy.group, {
-    url: `/models/kaykit/${file}`,
+    url: assetUrl(`models/kaykit/${file}`),
     kind,
     fallback: [enemy.bodyPivot, enemy.parts.leftLeg, enemy.parts.rightLeg],
     scale: 0.92,
@@ -218,14 +219,14 @@ export function resolveEnemyClip(state) {
 export function attachBossRig(boss) {
   const mage = boss.type === 'final';
   const rig = new RiggedCharacter(boss.group, {
-    url: `/models/kaykit-skeletons/${mage ? 'Skeleton_Mage' : 'Skeleton_Warrior'}.glb`,
+      url: assetUrl(`models/kaykit-skeletons/${mage ? 'Skeleton_Mage' : 'Skeleton_Warrior'}.glb`),
     kind: mage ? 'skeleton-mage' : 'skeleton-warrior',
     fallback: [boss.proceduralVisual],
     scale: mage ? 1.18 : 1.12,
     yOffset: 0,
     rotationY: 0,
     accessory: {
-      url: `/models/kaykit-skeletons/${mage ? 'Skeleton_Staff' : 'Skeleton_Axe'}.gltf`,
+      url: assetUrl(`models/kaykit-skeletons/${mage ? 'Skeleton_Staff' : 'Skeleton_Axe'}.gltf`),
       name: mage ? 'Overlord Staff' : 'Vanguard Axe',
       socket: 'handslot.r',
     },

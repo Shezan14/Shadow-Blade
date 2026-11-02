@@ -36512,14 +36512,14 @@ void main() {
         return this.sourceCache[sourceIndex].then((texture) => texture.clone());
       }
       const sourceDef = json.images[sourceIndex];
-      const URL = self.URL || self.webkitURL;
+      const URL2 = self.URL || self.webkitURL;
       let sourceURI = sourceDef.uri || "";
       let isObjectURL = false;
       if (sourceDef.bufferView !== void 0) {
         sourceURI = parser.getDependency("bufferView", sourceDef.bufferView).then(function(bufferView) {
           isObjectURL = true;
           const blob = new Blob([bufferView], { type: sourceDef.mimeType });
-          sourceURI = URL.createObjectURL(blob);
+          sourceURI = URL2.createObjectURL(blob);
           return sourceURI;
         });
       } else if (sourceDef.uri === void 0) {
@@ -36539,7 +36539,7 @@ void main() {
         });
       }).then(function(texture) {
         if (isObjectURL === true) {
-          URL.revokeObjectURL(sourceURI);
+          URL2.revokeObjectURL(sourceURI);
         }
         assignExtrasToUserData(texture, sourceDef);
         texture.userData.mimeType = sourceDef.mimeType || getImageURIMimeType(sourceDef.uri);
@@ -37332,6 +37332,7 @@ void main() {
 
   // src/characters/RiggedCharacter.js
   var loader = new GLTFLoader();
+  var assetUrl = (path) => new URL(path, document.baseURI).toString();
   var PLAYER_CLIPS = Object.freeze({
     idle: "Idle",
     walk: "Walking_A",
@@ -37477,7 +37478,7 @@ void main() {
       this.attackSerial = -1;
       this.castSerial = -1;
       this.rig = new RiggedCharacter(player, {
-        url: "/models/kaykit/Rogue_Hooded.glb",
+        url: assetUrl("models/kaykit/Rogue_Hooded.glb"),
         kind: "rogue",
         fallback: [player.userData.parts.visual],
         scale: 1.08,
@@ -37515,7 +37516,7 @@ void main() {
   function attachEnemyRig(enemy, kind = "knight") {
     const file = kind === "barbarian" ? "Barbarian.glb" : "Knight.glb";
     const rig = new RiggedCharacter(enemy.group, {
-      url: `/models/kaykit/${file}`,
+      url: assetUrl(`models/kaykit/${file}`),
       kind,
       fallback: [enemy.bodyPivot, enemy.parts.leftLeg, enemy.parts.rightLeg],
       scale: 0.92,
@@ -37536,14 +37537,14 @@ void main() {
   function attachBossRig(boss) {
     const mage = boss.type === "final";
     const rig = new RiggedCharacter(boss.group, {
-      url: `/models/kaykit-skeletons/${mage ? "Skeleton_Mage" : "Skeleton_Warrior"}.glb`,
+      url: assetUrl(`models/kaykit-skeletons/${mage ? "Skeleton_Mage" : "Skeleton_Warrior"}.glb`),
       kind: mage ? "skeleton-mage" : "skeleton-warrior",
       fallback: [boss.proceduralVisual],
       scale: mage ? 1.18 : 1.12,
       yOffset: 0,
       rotationY: 0,
       accessory: {
-        url: `/models/kaykit-skeletons/${mage ? "Skeleton_Staff" : "Skeleton_Axe"}.gltf`,
+        url: assetUrl(`models/kaykit-skeletons/${mage ? "Skeleton_Staff" : "Skeleton_Axe"}.gltf`),
         name: mage ? "Overlord Staff" : "Vanguard Axe",
         socket: "handslot.r"
       }
@@ -38611,10 +38612,10 @@ void main() {
   // src/scene/KayKitEnvironment.js
   var loader2 = new GLTFLoader();
   var cache = /* @__PURE__ */ new Map();
-  var ROOT = "/models/kaykit-dungeon/";
+  var assetUrl2 = (path) => new URL(path, document.baseURI).toString();
   function loadModel(file) {
     if (!cache.has(file)) {
-      cache.set(file, loader2.loadAsync(`${ROOT}${file}`).then((gltf) => gltf.scene));
+      cache.set(file, loader2.loadAsync(assetUrl2(`models/kaykit-dungeon/${file}`)).then((gltf) => gltf.scene));
     }
     return cache.get(file);
   }

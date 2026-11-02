@@ -3,11 +3,11 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 const loader = new GLTFLoader();
 const cache = new Map();
-const ROOT = '/models/kaykit-dungeon/';
+const assetUrl = (path) => new URL(path, document.baseURI).toString();
 
 function loadModel(file) {
   if (!cache.has(file)) {
-    cache.set(file, loader.loadAsync(`${ROOT}${file}`).then((gltf) => gltf.scene));
+    cache.set(file, loader.loadAsync(assetUrl(`models/kaykit-dungeon/${file}`)).then((gltf) => gltf.scene));
   }
   return cache.get(file);
 }
