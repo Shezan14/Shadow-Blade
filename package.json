@@ -1,0 +1,31 @@
+{
+  "name": "shadow-blade-rise-of-the-elements",
+  "private": true,
+  "version": "1.1.0",
+  "type": "module",
+  "scripts": {
+    "build:classic": "esbuild src/main.js --bundle --format=iife --platform=browser --target=es2018 --define:import.meta.env.DEV=true --outfile=public/shadow-blade-classic.js",
+    "predev": "npm run build:classic",
+    "dev": "vite",
+    "prebuild": "npm run build:classic",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "node tests/run-all.mjs",
+    "test:phase3": "node tests/phase3.test.mjs",
+    "test:phase4": "node tests/phase4.test.mjs",
+    "test:phase5": "node tests/phase5.test.mjs",
+    "test:phase6": "node tests/phase6.test.mjs",
+    "test:phase7": "node tests/phase7.test.mjs",
+    "test:phase8": "node tests/phase8.test.mjs",
+    "test:phase9": "node tests/phase9.test.mjs",
+    "test:phase10": "node tests/phase10.test.mjs",
+    "test:phase11": "node tests/phase11.test.mjs",
+    "test:campaign": "node tests/campaign.test.mjs"
+  },
+  "dependencies": {
+    "three": "^0.180.0"
+  },
+  "devDependencies": {
+    "vite": "^7.1.7"
+  }
+}

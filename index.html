@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#050711" />
+    <link rel="stylesheet" href="/src/style.css?direct" />
+    <meta
+      name="description"
+      content="Shadow Blade: Rise of the Elements — a browser-based 3D dark-fantasy action game."
+    />
+    <title>Shadow Blade — Rise of the Elements</title>
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="game-canvas" aria-label="Shadow Blade 3D scene"></canvas>
+
+      <div class="vignette" aria-hidden="true"></div>
+      <header class="brand">
+        <span class="brand__mark" aria-hidden="true"></span>
+        <span>SB // ELEMENTAL ARCHIVE</span>
+      </header>
+
+      <main class="hero">
+        <p class="eyebrow">A dark-fantasy browser experience</p>
+        <h1><span>Shadow Blade</span><small>Rise of the Elements</small></h1>
+        <p class="hero__copy">
+          Four primal forces fracture the veil. One warrior enters the arena to restore the balance.
+        </p>
+        <div class="phase-badge"><i></i> Campaign Edition — Five realms awakened</div>
+      </main>
+
+      <section id="start-screen" class="start-screen">
+        <div class="start-actions">
+          <button id="start-button" type="button">
+            <span>New campaign</span>
+            <small>Begin at the Fire Courtyard</small>
+          </button>
+          <button id="continue-button" class="continue-button" type="button" hidden>
+            <span>Continue journey</span>
+            <small>Resume from checkpoint</small>
+          </button>
+        </div>
+        <div class="control-strip" aria-label="Controls">
+          <span><kbd>WASD</kbd> Move</span>
+          <span><kbd>Shift</kbd> Run</span>
+          <span><kbd>Space</kbd> Jump / Dodge</span>
+          <span><kbd>E</kbd> Interact</span>
+          <span><kbd>Mouse</kbd> Orbit / Zoom</span>
+          <span><kbd>V</kbd> View Mode</span>
+          <span><kbd>LMB</kbd> Sword / Combo</span>
+          <span><kbd>RMB</kbd> Block</span>
+          <span><kbd>1–4</kbd> Elements</span>
+        </div>
+      </section>
+
+      <div id="mouse-status" class="mouse-status">Click the arena to recapture mouse</div>
+      <button id="audio-toggle" class="audio-toggle" type="button" aria-pressed="false" title="Toggle audio (M)">Audio on</button>
+      <button id="settings-toggle" class="settings-toggle" type="button" aria-expanded="false" title="Settings">Settings</button>
+      <section id="settings-panel" class="settings-panel" aria-label="Game settings" hidden>
+        <label for="sensitivity-control">Mouse sensitivity <output id="sensitivity-value">100%</output></label>
+        <input id="sensitivity-control" type="range" min="0.5" max="2" step="0.05" value="1" />
+        <label for="walk-speed-control">Walk speed <output id="walk-speed-value">10</output></label>
+        <input id="walk-speed-control" type="range" min="4" max="16" step="0.5" value="10" />
+        <label for="run-speed-control">Run speed <output id="run-speed-value">18</output></label>
+        <input id="run-speed-control" type="range" min="6" max="24" step="0.5" value="18" />
+        <small><kbd>V</kbd> switches first / third person</small>
+      </section>
+      <div id="damage-flash" class="damage-flash" aria-hidden="true"></div>
+
+      <section id="encounter-banner" class="encounter-banner" aria-live="polite">
+        <strong></strong>
+        <span></span>
+      </section>
+
+      <section class="combat-hud" aria-label="Combat status">
+        <div class="meter meter--health">
+          <span>Vitality</span>
+          <div class="meter__track"><i id="health-fill"></i></div>
+        </div>
+        <div class="meter meter--stamina">
+          <span>Stamina</span>
+          <div class="meter__track"><i id="stamina-fill"></i></div>
+        </div>
+      </section>
+
+      <section class="ability-hud" aria-label="Elemental abilities">
+        <div class="ability-slot ability-slot--fire" data-element="fire">
+          <b>1</b><span>Fire</span><small>READY</small><i></i>
+        </div>
+        <div class="ability-slot ability-slot--ice" data-element="ice">
+          <b>2</b><span>Ice</span><small>READY</small><i></i>
+        </div>
+        <div class="ability-slot ability-slot--lightning" data-element="lightning">
+          <b>3</b><span>Lightning</span><small>READY</small><i></i>
+        </div>
+        <div class="ability-slot ability-slot--wind" data-element="wind">
+          <b>4</b><span>Wind</span><small>READY</small><i></i>
+        </div>
+      </section>
+
+      <div class="reticle" aria-hidden="true"><i id="hit-marker"></i></div>
+      <div id="combo-readout" class="combo-readout"></div>
+
+      <section id="boss-hud" class="boss-hud" aria-label="Boss health">
+        <div class="boss-hud__title">
+          <span id="boss-name"></span>
+          <small id="boss-phase"></small>
+        </div>
+        <div class="boss-hud__track"><i id="boss-health-fill"></i></div>
+      </section>
+
+      <section id="campaign-hud" class="campaign-hud" aria-label="Campaign progress">
+        <div><small id="campaign-level">LEVEL 01 / 05</small><strong id="campaign-title">Ruined Fire Courtyard</strong></div>
+        <p id="campaign-objective">Enter the arena</p>
+        <span id="campaign-shards">0 / 4 SHARDS</span>
+      </section>
+
+      <section id="campaign-screen" class="screen-overlay campaign-screen" aria-label="Campaign chapter">
+        <div class="screen-panel campaign-panel">
+          <p id="campaign-screen-chapter" class="screen-panel__eyebrow">Chapter I</p>
+          <h2 id="campaign-screen-title">Ruined Fire Courtyard</h2>
+          <p id="campaign-screen-story">The first fracture waits.</p>
+          <span id="campaign-screen-reward" class="campaign-panel__reward">Attuned element · Fire</span>
+          <div class="screen-panel__actions">
+            <button id="campaign-action" class="menu-button" type="button">Enter chapter</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="pause-screen" class="screen-overlay" aria-label="Game paused">
+        <div class="screen-panel">
+          <p class="screen-panel__eyebrow">The arena waits</p>
+          <h2>Paused</h2>
+          <p>Catch your breath. The shadows will remain exactly where you left them.</p>
+          <div class="screen-panel__actions">
+            <button id="resume-button" class="menu-button" type="button">Resume</button>
+            <button class="menu-button menu-button--quiet" data-action="restart" type="button">Restart run</button>
+            <button class="menu-button menu-button--quiet" data-action="menu" type="button">Main menu</button>
+          </div>
+          <small><kbd>Esc</kbd> Resume</small>
+        </div>
+      </section>
+
+      <section id="game-over-screen" class="screen-overlay screen-overlay--defeat" aria-label="Game over">
+        <div class="screen-panel">
+          <p class="screen-panel__eyebrow">The blade has fallen</p>
+          <h2>Game Over</h2>
+          <p>The corruption endures, but the arena remembers every challenger.</p>
+          <div class="screen-panel__actions">
+            <button class="menu-button" data-action="restart" type="button">Try again</button>
+            <button class="menu-button menu-button--quiet" data-action="menu" type="button">Main menu</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="victory-screen" class="screen-overlay screen-overlay--victory" aria-label="Victory">
+        <div class="screen-panel">
+          <p class="screen-panel__eyebrow">Balance restored</p>
+          <h2>Victory</h2>
+          <p>The Elemental Overlord is broken. For now, the veil is whole again.</p>
+          <div class="screen-panel__actions">
+            <button class="menu-button" data-action="restart" type="button">Fight again</button>
+            <button class="menu-button menu-button--quiet" data-action="menu" type="button">Main menu</button>
+          </div>
+        </div>
+      </section>
+
+      <aside class="elements" aria-label="Elemental forces">
+        <span class="element element--fire">01 <b>Fire</b></span>
+        <span class="element element--ice">02 <b>Ice</b></span>
+        <span class="element element--lightning">03 <b>Lightning</b></span>
+        <span class="element element--wind">04 <b>Wind</b></span>
+      </aside>
+
+      <footer class="status">
+        <span>WebGL 2</span>
+        <span class="status__line"></span>
+        <span id="render-status">Initializing renderer</span>
+        <span id="particle-count">Particles 0</span>
+      </footer>
+
+      <aside id="debug-panel" class="debug-panel" aria-live="polite">
+        <header><strong>Runtime telemetry</strong><span>F1 close · F2 bounds</span></header>
+        <dl>
+          <div><dt>FPS</dt><dd data-debug="fps">60</dd></div>
+          <div><dt>Draw calls</dt><dd data-debug="drawCalls">0</dd></div>
+          <div><dt>Triangles</dt><dd data-debug="triangles">0</dd></div>
+          <div><dt>Render quality</dt><dd data-debug="quality">100%</dd></div>
+          <div><dt>Player XYZ</dt><dd data-debug="position">0, 0, 0</dd></div>
+          <div><dt>Game state</dt><dd data-debug="state">MAIN_MENU</dd></div>
+          <div><dt>Enemy AI</dt><dd data-debug="enemies">idle</dd></div>
+          <div><dt>Particles</dt><dd data-debug="particles">0</dd></div>
+          <div><dt>Collision bounds</dt><dd data-debug="collisions">OFF</dd></div>
+        </dl>
+      </aside>
+
+      <section id="webgl-error" class="error" hidden>
+        <h2>WebGL 2 is required</h2>
+        <p>Enable hardware acceleration or open this page in a current desktop browser.</p>
+      </section>
+      <section id="boot-error" class="error" hidden>
+        <h2>Game scripts were blocked</h2>
+        <p>Allow JavaScript for 127.0.0.1, disable shields for this local page, then reload.</p>
+      </section>
+    </div>
+    <script>
+      window.__shadowBladeBooted = false;
+      const showBootError = () => {
+        const panel = document.querySelector('#boot-error');
+        if (panel) panel.hidden = false;
+      };
+      const loadClassicBuild = () => {
+        if (window.__shadowBladeBooted || document.querySelector('[data-classic-build]')) return;
+        const fallback = document.createElement('script');
+        fallback.dataset.classicBuild = 'true';
+        fallback.src = '/shadow-blade-classic.js';
+        fallback.onload = () => {
+          window.setTimeout(() => {
+            if (!window.__shadowBladeBooted) showBootError();
+          }, 500);
+        };
+        fallback.onerror = showBootError;
+        document.head.appendChild(fallback);
+      };
+
+      const forceClassic = new URLSearchParams(window.location.search).get('classic') === '1';
+      if (forceClassic) {
+        loadClassicBuild();
+      } else {
+        window.setTimeout(loadClassicBuild, 2500);
+      }
+    </script>
+    <script type="module" src="/src/modern-entry.js"></script>
+  </body>
+</html>
