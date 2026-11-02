@@ -14,7 +14,7 @@ export const MAP_THEMES = Object.freeze([
 export const LEVEL_LAYOUTS = Object.freeze([
   {
     bounds: { type: 'rect', halfWidth: 16, halfDepth: 30 },
-    start: [0, 22], shard: [0, -24], shardSpawns: [[0, -24], [7, -24], [-5, -23]], portal: [0, -27],
+    start: [0, 22], shard: [0, -24], shardSpawns: [[0, -24], [7, -24], [-5, -23], [-8, -18], [8, -19], [-4, -6], [5, -4]], portal: [0, -27],
     spawns: [[-10, 0], [10, 0], [0, -5]],
     seals: [[-11, 19], [11, 17], [0, 9]],
     bossTrigger: [0, -17], bossSpawn: [0, -23], healthPickup: [10, 22],
@@ -30,7 +30,7 @@ export const LEVEL_LAYOUTS = Object.freeze([
   },
   {
     bounds: { type: 'rect', halfWidth: 9, halfDepth: 17 },
-    start: [0, 15], shard: [0, -12], shardSpawns: [[0, -12], [0, -8], [3.2, -13]], portal: [0, -15],
+    start: [0, 15], shard: [0, -12], shardSpawns: [[0, -12], [0, -8], [3.2, -13], [-3.5, -11], [3.8, 8], [-3.6, 8]], portal: [0, -15],
     spawns: [[-5.5, -7], [5.5, -7], [0, -12]],
     seals: [[-5.8, 11], [5.8, 2]], healthPickup: [-6, 13],
     obstacles: [
@@ -41,7 +41,7 @@ export const LEVEL_LAYOUTS = Object.freeze([
   },
   {
     bounds: { type: 'rect', halfWidth: 16, halfDepth: 13 },
-    start: [-12.5, 10], shard: [5.8, -9.2], shardSpawns: [[5.8, -9.2], [2, -9], [10, -3]], portal: [13, -10],
+    start: [-12.5, 10], shard: [5.8, -9.2], shardSpawns: [[5.8, -9.2], [2, -9], [10, -3], [-9, 5], [-2, 7], [12, 4], [-10, -7]], portal: [13, -10],
     spawns: [[-1, -4], [8, 2], [11, -7]],
     seals: [[-10, 7], [0, 8], [11, 5]], healthPickup: [12, 10],
     obstacles: [
@@ -52,7 +52,7 @@ export const LEVEL_LAYOUTS = Object.freeze([
   },
   {
     bounds: { type: 'circle', radius: 15 },
-    start: [0, 12], shard: [0, -9.5], shardSpawns: [[0, -9.5], [-3, -10], [3, -10]], portal: [0, -12],
+    start: [0, 12], shard: [0, -9.5], shardSpawns: [[0, -9.5], [-3, -10], [3, -10], [-10, -3], [10, -3], [-7, 8], [7, 8]], portal: [0, -12],
     spawns: [[-7, -4], [7, -4], [0, -9]],
     seals: [[-8, 5], [8, 5]], bossTrigger: [0, -4], bossSpawn: [0, -8], healthPickup: [-10, 9],
     obstacles: [
@@ -62,7 +62,7 @@ export const LEVEL_LAYOUTS = Object.freeze([
   },
   {
     bounds: { type: 'circle', radius: 13 },
-    start: [0, 10], shard: [0, 0], shardSpawns: [[0, 0], [-3, -4], [3, -4]], portal: [0, -10], spawns: [],
+    start: [0, 10], shard: [0, 0], shardSpawns: [[0, 0], [-3, -4], [3, -4], [-5, 5], [5, 5], [-9, -3], [9, -3]], portal: [0, -10], spawns: [],
     seals: [[-7, 4], [7, 4], [0, -2]], bossTrigger: [0, -4], bossSpawn: [0, -7], healthPickup: [8, 7], obstacles: [],
   },
 ]);

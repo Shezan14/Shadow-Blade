@@ -161,7 +161,7 @@ const profileLabel = (() => {
   const texture = new THREE.CanvasTexture(labelCanvas);
   texture.colorSpace = THREE.SRGBColorSpace;
   const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: false }));
-  sprite.position.set(0, 2.9, 0); sprite.scale.set(1.9, 0.36, 1); sprite.visible = false;
+  sprite.position.set(0, 1.92, 0); sprite.scale.set(1.45, 0.27, 1); sprite.visible = false;
   world.player.add(sprite);
   return { sprite, context, texture };
 })();

@@ -86,7 +86,9 @@ export class AudioManager {
   }
 
   sword(combo = 0) {
-    return this.tone({ frequency: 260 + combo * 45, endFrequency: 82, duration: 0.13, volume: 0.12, type: 'sawtooth' });
+    const started = this.tone({ frequency: 980 + combo * 85, endFrequency: 150, duration: 0.2, volume: 0.18, type: 'sawtooth' });
+    this.tone({ frequency: 160 + combo * 25, endFrequency: 58, duration: 0.1, volume: 0.11, type: 'square', delay: 0.025 });
+    return started;
   }
 
   hit() {
