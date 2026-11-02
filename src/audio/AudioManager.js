@@ -8,6 +8,8 @@ export class AudioManager {
     this.ambient = null;
     this.muted = false;
     this.available = Boolean(AudioContextClass);
+    this.music = typeof Audio !== 'undefined' ? new Audio(new URL('audio/background-theme.mp3', document.baseURI).toString()) : null;
+    if (this.music) { this.music.loop = true; this.music.volume = 0.2; this.music.preload = 'auto'; }
   }
 
   async unlock() {
@@ -15,6 +17,7 @@ export class AudioManager {
     try {
       if (!this.context) this.createGraph();
       if (this.context.state === 'suspended') await this.context.resume();
+      if (this.music && !this.muted) void this.music.play().catch(() => {});
       return this.context.state === 'running';
     } catch {
       this.available = false;
@@ -50,6 +53,7 @@ export class AudioManager {
 
   toggleMuted() {
     this.muted = !this.muted;
+    if (this.music) { this.music.muted = this.muted; if (!this.muted) void this.music.play().catch(() => {}); }
     if (this.master && this.context) {
       this.master.gain.cancelScheduledValues(this.context.currentTime);
       this.master.gain.setTargetAtTime(this.muted ? 0 : 0.34, this.context.currentTime, 0.025);
@@ -118,4 +122,6 @@ export class AudioManager {
     this.tone({ frequency: victory ? 220 : 82, endFrequency: victory ? 440 : 48, duration: 0.55, volume: 0.11, type: 'triangle' });
     return true;
   }
+
+  menu() { return this.tone({ frequency: 310, endFrequency: 560, duration: 0.16, volume: 0.08, type: 'triangle' }); }
 }

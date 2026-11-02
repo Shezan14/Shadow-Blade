@@ -189,7 +189,8 @@ export function createCampaignMaps(scene, parent) {
   });
   const portal = createPortal();
   const shard = createShard();
-  parent.add(portal, shard);
+  const healthDrops = new THREE.Group();
+  parent.add(portal, shard, healthDrops);
   let levelIndex = 0;
 
   return {
@@ -203,6 +204,7 @@ export function createCampaignMaps(scene, parent) {
       const healthPickup = groups[index].userData.healthPickup;
       healthPickup.userData.collected = false;
       healthPickup.visible = true;
+      healthDrops.clear();
       const theme = MAP_THEMES[index];
       const layout = LEVEL_LAYOUTS[index];
       portal.position.set(layout.portal[0], 1.35, layout.portal[1]);
@@ -236,6 +238,22 @@ export function createCampaignMaps(scene, parent) {
       pickup.userData.collected = true;
       pickup.visible = false;
       return true;
+    },
+    dropHealth(position) {
+      const pickup = createHealthPickup([position.x, position.z]);
+      pickup.position.y = 0.65;
+      pickup.scale.setScalar(0.62);
+      pickup.userData.drop = true;
+      healthDrops.add(pickup);
+    },
+    collectHealthDrops(position, range = 1.1) {
+      let count = 0;
+      [...healthDrops.children].forEach((pickup) => {
+        if (Math.hypot(pickup.position.x - position.x, pickup.position.z - position.z) <= range) {
+          healthDrops.remove(pickup); count += 1;
+        }
+      });
+      return count;
     },
     startObjectives() {
       const seals = groups[levelIndex].userData.seals ?? [];
@@ -295,6 +313,10 @@ export function createCampaignMaps(scene, parent) {
         pickup.rotation.y = elapsed * 1.6;
         pickup.position.y = 1.1 + Math.sin(elapsed * 2.7) * 0.1;
       }
+      healthDrops.children.forEach((pickup, index) => {
+        pickup.rotation.y = elapsed * 1.8 + index;
+        pickup.position.y = 0.65 + Math.sin(elapsed * 3 + index) * 0.08;
+      });
     },
   };
 }

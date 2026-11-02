@@ -35,6 +35,8 @@ const walkSpeedControl = document.querySelector('#walk-speed-control');
 const walkSpeedValue = document.querySelector('#walk-speed-value');
 const runSpeedControl = document.querySelector('#run-speed-control');
 const runSpeedValue = document.querySelector('#run-speed-value');
+const playerNameInput = document.querySelector('#player-name');
+const guestButton = document.querySelector('#guest-button');
 
 if (!supportsWebGL2(canvas)) {
   errorPanel.hidden = false;
@@ -152,6 +154,28 @@ const campaign = new CampaignSystem({
   playerCombat,
   playerController,
 });
+const profileLabel = (() => {
+  const labelCanvas = document.createElement('canvas');
+  labelCanvas.width = 512; labelCanvas.height = 96;
+  const context = labelCanvas.getContext('2d');
+  const texture = new THREE.CanvasTexture(labelCanvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: false }));
+  sprite.position.set(0, 2.9, 0); sprite.scale.set(1.9, 0.36, 1); sprite.visible = false;
+  world.player.add(sprite);
+  return { sprite, context, texture };
+})();
+function setPlayerProfile(username, guest) {
+  const clean = String(username ?? '').trim().slice(0, 16);
+  campaign.setProfile({ username: clean, guest });
+  profileLabel.sprite.visible = Boolean(clean);
+  if (!clean) return;
+  const { context, texture } = profileLabel;
+  context.clearRect(0, 0, 512, 96);
+  context.font = '600 44px sans-serif'; context.textAlign = 'center'; context.textBaseline = 'middle';
+  context.fillStyle = '#dffcff'; context.shadowColor = '#000'; context.shadowBlur = 8;
+  context.fillText(clean, 256, 48); texture.needsUpdate = true;
+}
 const hud = new HUD();
 const menus = new MenuController();
 const uiAnimations = new UIAnimations(document.querySelector('#encounter-banner'));
@@ -212,8 +236,14 @@ function applyState(nextState) {
   }
 }
 
-function enterArena(continueRun = false) {
+function enterArena(continueRun = false, guest = false) {
   void audio.unlock();
+  if (!continueRun) {
+    const name = playerNameInput.value.trim();
+    if (!guest && !name) { playerNameInput.focus(); return; }
+    setPlayerProfile(guest ? 'Guest' : name, guest);
+    audio.menu();
+  }
   if (!gameState.transition(GAME_STATES.PLAYING)) return;
   if (continueRun) campaign.continueFromCheckpoint();
   else campaign.startNew();
@@ -228,7 +258,8 @@ function reloadGame() {
   window.location.assign(window.location.pathname);
 }
 
-menus.bind({ start: () => enterArena(false), resume: resumeGame, restart: reloadGame, menu: reloadGame });
+menus.bind({ start: () => enterArena(false, false), resume: resumeGame, restart: reloadGame, menu: reloadGame });
+guestButton.addEventListener('click', () => enterArena(false, true));
 document.querySelector('#continue-button').addEventListener('click', () => enterArena(true));
 campaignUI.setContinueAvailable(campaign.hasCheckpoint);
 campaignUI.bindAction(() => {

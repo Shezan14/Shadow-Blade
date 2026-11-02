@@ -465,6 +465,9 @@ kbd {
 }
 
 .menu-button:hover { color: #fff; border-color: #67f2ea; background: rgba(42, 137, 145, .35); transform: translateY(-2px); }
+.profile-entry { display: grid; gap: 7px; color: #91a5c5; font-size: 9px; letter-spacing: .14em; text-transform: uppercase; }
+.profile-entry input { width: 220px; border: 1px solid rgba(112, 226, 223, .32); outline: none; padding: 12px 13px; color: #e9ffff; background: rgba(4, 10, 22, .76); font: 600 12px Inter, sans-serif; letter-spacing: .06em; }
+.profile-entry input:focus { border-color: #6df4e6; box-shadow: 0 0 18px rgba(74, 222, 212, .16); }
 .menu-button--quiet { min-width: 112px; border-color: rgba(136, 151, 190, .22); color: #8892ac; background: rgba(8, 11, 24, .55); }
 .screen-overlay--defeat .screen-panel::after { background: linear-gradient(90deg, transparent, #ff526e, transparent); box-shadow: 0 0 16px #ff526e; }
 .screen-overlay--defeat .screen-panel__eyebrow { color: #db5570; }

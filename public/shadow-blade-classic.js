@@ -13210,6 +13210,166 @@
       }
     }
   };
+  var SpriteMaterial = class extends Material {
+    /**
+     * Constructs a new sprite material.
+     *
+     * @param {Object} [parameters] - An object with one or more properties
+     * defining the material's appearance. Any property of the material
+     * (including any property from inherited materials) can be passed
+     * in here. Color values can be passed any type of value accepted
+     * by {@link Color#set}.
+     */
+    constructor(parameters) {
+      super();
+      this.isSpriteMaterial = true;
+      this.type = "SpriteMaterial";
+      this.color = new Color(16777215);
+      this.map = null;
+      this.alphaMap = null;
+      this.rotation = 0;
+      this.sizeAttenuation = true;
+      this.transparent = true;
+      this.fog = true;
+      this.setValues(parameters);
+    }
+    copy(source) {
+      super.copy(source);
+      this.color.copy(source.color);
+      this.map = source.map;
+      this.alphaMap = source.alphaMap;
+      this.rotation = source.rotation;
+      this.sizeAttenuation = source.sizeAttenuation;
+      this.fog = source.fog;
+      return this;
+    }
+  };
+  var _geometry;
+  var _intersectPoint = /* @__PURE__ */ new Vector3();
+  var _worldScale = /* @__PURE__ */ new Vector3();
+  var _mvPosition = /* @__PURE__ */ new Vector3();
+  var _alignedPosition = /* @__PURE__ */ new Vector2();
+  var _rotatedPosition = /* @__PURE__ */ new Vector2();
+  var _viewWorldMatrix = /* @__PURE__ */ new Matrix4();
+  var _vA = /* @__PURE__ */ new Vector3();
+  var _vB = /* @__PURE__ */ new Vector3();
+  var _vC = /* @__PURE__ */ new Vector3();
+  var _uvA = /* @__PURE__ */ new Vector2();
+  var _uvB = /* @__PURE__ */ new Vector2();
+  var _uvC = /* @__PURE__ */ new Vector2();
+  var Sprite = class extends Object3D {
+    /**
+     * Constructs a new sprite.
+     *
+     * @param {(SpriteMaterial|SpriteNodeMaterial)} [material] - The sprite material.
+     */
+    constructor(material = new SpriteMaterial()) {
+      super();
+      this.isSprite = true;
+      this.type = "Sprite";
+      if (_geometry === void 0) {
+        _geometry = new BufferGeometry();
+        const float32Array = new Float32Array([
+          -0.5,
+          -0.5,
+          0,
+          0,
+          0,
+          0.5,
+          -0.5,
+          0,
+          1,
+          0,
+          0.5,
+          0.5,
+          0,
+          1,
+          1,
+          -0.5,
+          0.5,
+          0,
+          0,
+          1
+        ]);
+        const interleavedBuffer = new InterleavedBuffer(float32Array, 5);
+        _geometry.setIndex([0, 1, 2, 0, 2, 3]);
+        _geometry.setAttribute("position", new InterleavedBufferAttribute(interleavedBuffer, 3, 0, false));
+        _geometry.setAttribute("uv", new InterleavedBufferAttribute(interleavedBuffer, 2, 3, false));
+      }
+      this.geometry = _geometry;
+      this.material = material;
+      this.center = new Vector2(0.5, 0.5);
+      this.count = 1;
+    }
+    /**
+     * Computes intersection points between a casted ray and this sprite.
+     *
+     * @param {Raycaster} raycaster - The raycaster.
+     * @param {Array<Object>} intersects - The target array that holds the intersection points.
+     */
+    raycast(raycaster, intersects2) {
+      if (raycaster.camera === null) {
+        console.error('THREE.Sprite: "Raycaster.camera" needs to be set in order to raycast against sprites.');
+      }
+      _worldScale.setFromMatrixScale(this.matrixWorld);
+      _viewWorldMatrix.copy(raycaster.camera.matrixWorld);
+      this.modelViewMatrix.multiplyMatrices(raycaster.camera.matrixWorldInverse, this.matrixWorld);
+      _mvPosition.setFromMatrixPosition(this.modelViewMatrix);
+      if (raycaster.camera.isPerspectiveCamera && this.material.sizeAttenuation === false) {
+        _worldScale.multiplyScalar(-_mvPosition.z);
+      }
+      const rotation = this.material.rotation;
+      let sin, cos;
+      if (rotation !== 0) {
+        cos = Math.cos(rotation);
+        sin = Math.sin(rotation);
+      }
+      const center = this.center;
+      transformVertex(_vA.set(-0.5, -0.5, 0), _mvPosition, center, _worldScale, sin, cos);
+      transformVertex(_vB.set(0.5, -0.5, 0), _mvPosition, center, _worldScale, sin, cos);
+      transformVertex(_vC.set(0.5, 0.5, 0), _mvPosition, center, _worldScale, sin, cos);
+      _uvA.set(0, 0);
+      _uvB.set(1, 0);
+      _uvC.set(1, 1);
+      let intersect2 = raycaster.ray.intersectTriangle(_vA, _vB, _vC, false, _intersectPoint);
+      if (intersect2 === null) {
+        transformVertex(_vB.set(-0.5, 0.5, 0), _mvPosition, center, _worldScale, sin, cos);
+        _uvB.set(0, 1);
+        intersect2 = raycaster.ray.intersectTriangle(_vA, _vC, _vB, false, _intersectPoint);
+        if (intersect2 === null) {
+          return;
+        }
+      }
+      const distance = raycaster.ray.origin.distanceTo(_intersectPoint);
+      if (distance < raycaster.near || distance > raycaster.far) return;
+      intersects2.push({
+        distance,
+        point: _intersectPoint.clone(),
+        uv: Triangle.getInterpolation(_intersectPoint, _vA, _vB, _vC, _uvA, _uvB, _uvC, new Vector2()),
+        face: null,
+        object: this
+      });
+    }
+    copy(source, recursive) {
+      super.copy(source, recursive);
+      if (source.center !== void 0) this.center.copy(source.center);
+      this.material = source.material;
+      return this;
+    }
+  };
+  function transformVertex(vertexPosition, mvPosition, center, scale, sin, cos) {
+    _alignedPosition.subVectors(vertexPosition, center).addScalar(0.5).multiply(scale);
+    if (sin !== void 0) {
+      _rotatedPosition.x = cos * _alignedPosition.x - sin * _alignedPosition.y;
+      _rotatedPosition.y = sin * _alignedPosition.x + cos * _alignedPosition.y;
+    } else {
+      _rotatedPosition.copy(_alignedPosition);
+    }
+    vertexPosition.copy(mvPosition);
+    vertexPosition.x += _rotatedPosition.x;
+    vertexPosition.y += _rotatedPosition.y;
+    vertexPosition.applyMatrix4(_viewWorldMatrix);
+  }
   var _basePosition = /* @__PURE__ */ new Vector3();
   var _skinIndex = /* @__PURE__ */ new Vector4();
   var _skinWeight = /* @__PURE__ */ new Vector4();
@@ -14630,6 +14790,26 @@
       });
     }
   }
+  var CanvasTexture = class extends Texture {
+    /**
+     * Constructs a new texture.
+     *
+     * @param {HTMLCanvasElement} [canvas] - The HTML canvas element.
+     * @param {number} [mapping=Texture.DEFAULT_MAPPING] - The texture mapping.
+     * @param {number} [wrapS=ClampToEdgeWrapping] - The wrapS value.
+     * @param {number} [wrapT=ClampToEdgeWrapping] - The wrapT value.
+     * @param {number} [magFilter=LinearFilter] - The mag filter value.
+     * @param {number} [minFilter=LinearMipmapLinearFilter] - The min filter value.
+     * @param {number} [format=RGBAFormat] - The texture format.
+     * @param {number} [type=UnsignedByteType] - The texture type.
+     * @param {number} [anisotropy=Texture.DEFAULT_ANISOTROPY] - The anisotropy value.
+     */
+    constructor(canvas2, mapping, wrapS, wrapT, magFilter, minFilter, format, type, anisotropy) {
+      super(canvas2, mapping, wrapS, wrapT, magFilter, minFilter, format, type, anisotropy);
+      this.isCanvasTexture = true;
+      this.needsUpdate = true;
+    }
+  };
   var DepthTexture = class extends Texture {
     /**
      * Constructs a new depth texture.
@@ -33710,6 +33890,7 @@ void main() {
       this.activatedSeals = 0;
       this.interactQueued = false;
       this.transitionTarget = "";
+      this.profile = { guest: false, username: "" };
       this.onKeyDown = (event) => {
         if (event.code === CONFIG.controls.interact && !event.repeat) this.interactQueued = true;
       };
@@ -33733,7 +33914,8 @@ void main() {
     readCheckpoint() {
       var _a3;
       try {
-        const saved = JSON.parse((_a3 = this.storage) == null ? void 0 : _a3.getItem("shadowBladeCheckpoint"));
+        if (this.profile.guest) return null;
+        const saved = JSON.parse((_a3 = this.storage) == null ? void 0 : _a3.getItem(this.checkpointKey));
         if (!saved || !Number.isInteger(saved.level) || saved.level < 1 || saved.level >= CAMPAIGN_LEVELS.length) return null;
         return saved;
       } catch (e) {
@@ -33743,20 +33925,27 @@ void main() {
     saveCheckpoint() {
       var _a3;
       try {
-        (_a3 = this.storage) == null ? void 0 : _a3.setItem("shadowBladeCheckpoint", JSON.stringify({ level: Math.min(this.levelIndex + 1, 4), shards: this.shards }));
+        if (!this.profile.guest) (_a3 = this.storage) == null ? void 0 : _a3.setItem(this.checkpointKey, JSON.stringify({ level: Math.min(this.levelIndex + 1, 4), shards: this.shards }));
       } catch (e) {
       }
     }
     startNew() {
       var _a3;
       try {
-        (_a3 = this.storage) == null ? void 0 : _a3.removeItem("shadowBladeCheckpoint");
+        if (!this.profile.guest) (_a3 = this.storage) == null ? void 0 : _a3.removeItem(this.checkpointKey);
       } catch (e) {
       }
       this.levelIndex = 0;
       this.shards = 0;
       this.complete = false;
       this.prepareLevel();
+    }
+    get checkpointKey() {
+      return this.profile.username ? `shadowBladeCheckpoint:${this.profile.username}` : "shadowBladeCheckpoint";
+    }
+    setProfile({ username = "", guest = false } = {}) {
+      this.profile = { username: String(username).trim().slice(0, 16), guest: Boolean(guest) };
+      this.emit("profile");
     }
     continueFromCheckpoint() {
       var _a3, _b2;
@@ -33848,6 +34037,7 @@ void main() {
         enemy.speedScale = 1.35 + (difficulty - 1) * 0.55;
         enemy.damageable.maxHealth = Math.round(enemy.stats.maxHealth * difficulty);
         enemy.damageable.reset();
+        enemy.healthDropSpawned = false;
         const fallbackSpawns = [[-2.8, -2.5], [3.2, -2.2], [0.2, -4.8]];
         const spawn = (_c = (_b2 = (_a3 = this.maps).getSpawn) == null ? void 0 : _b2.call(_a3, spawnIndex)) != null ? _c : fallbackSpawns[spawnIndex];
         enemy.spawnPosition.set(spawn[0], 0, spawn[1]);
@@ -33865,7 +34055,7 @@ void main() {
         this.phase = "complete";
         this.complete = true;
         try {
-          (_a3 = this.storage) == null ? void 0 : _a3.removeItem("shadowBladeCheckpoint");
+          if (!this.profile.guest) (_a3 = this.storage) == null ? void 0 : _a3.removeItem(this.checkpointKey);
         } catch (e) {
         }
         this.emit("complete");
@@ -33900,13 +34090,25 @@ void main() {
       return true;
     }
     update(delta) {
-      var _a3, _b2, _c, _d, _e, _f, _g, _h;
+      var _a3, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k;
       if ((_b2 = (_a3 = this.maps).collectHealthPickup) == null ? void 0 : _b2.call(_a3, this.player.position)) {
         this.playerCombat.health.heal(35);
         this.emit("heal");
       }
+      const drops = (_e = (_d = (_c = this.maps).collectHealthDrops) == null ? void 0 : _d.call(_c, this.player.position)) != null ? _e : 0;
+      if (drops) {
+        this.playerCombat.health.heal(drops * 22);
+        this.emit("heal");
+      }
+      this.activeEnemies.forEach((enemy) => {
+        var _a4, _b3;
+        if (enemy.dead && !enemy.healthDropSpawned) {
+          enemy.healthDropSpawned = true;
+          (_b3 = (_a4 = this.maps).dropHealth) == null ? void 0 : _b3.call(_a4, enemy.group.position);
+        }
+      });
       if (this.phase === "explore") {
-        if (this.interactQueued && ((_d = (_c = this.maps).activateNearbySeal) == null ? void 0 : _d.call(_c, this.player.position))) {
+        if ((_g = (_f = this.maps).activateNearbySeal) == null ? void 0 : _g.call(_f, this.player.position)) {
           this.activatedSeals += 1;
           this.emit("objective");
           if (this.activatedSeals >= this.sealCount) {
@@ -33924,7 +34126,7 @@ void main() {
           this.transitionTarget = "wave";
         }
       } else if (this.phase === "boss_gate") {
-        const trigger = (_f = (_e = this.maps).getBossTrigger) == null ? void 0 : _f.call(_e);
+        const trigger = (_i = (_h = this.maps).getBossTrigger) == null ? void 0 : _i.call(_h);
         if (trigger && Math.hypot(this.player.position.x - trigger[0], this.player.position.z - trigger[1]) < 2.2) this.startBoss();
       } else if (this.phase === "boss" && this.bossSystem.completed) {
         this.phase = "transition";
@@ -33936,7 +34138,7 @@ void main() {
           const level = CAMPAIGN_LEVELS[this.levelIndex];
           if (this.transitionTarget === "combat") {
             this.startCombatStage();
-          } else if (this.transitionTarget === "wave" && this.waveIndex < ((_h = (_g = level.waves) == null ? void 0 : _g.length) != null ? _h : 0) - 1) {
+          } else if (this.transitionTarget === "wave" && this.waveIndex < ((_k = (_j = level.waves) == null ? void 0 : _j.length) != null ? _k : 0) - 1) {
             this.waveIndex += 1;
             this.phase = "combat";
             this.spawnWave(level.waves[this.waveIndex]);
@@ -33958,7 +34160,7 @@ void main() {
       var _a3;
       const level = (_a3 = CAMPAIGN_LEVELS[this.levelIndex]) != null ? _a3 : CAMPAIGN_LEVELS.at(-1);
       let objective = "Enter the arena";
-      if (this.phase === "explore") objective = `Explore and activate elemental seals ${this.activatedSeals}/${this.sealCount} - press E nearby`;
+      if (this.phase === "explore") objective = `Explore and activate elemental seals ${this.activatedSeals}/${this.sealCount}`;
       if (this.phase === "combat") objective = `Clear guard wave ${this.waveIndex + 1} of ${level.waves.length}`;
       if (this.phase === "boss_gate") objective = "The boss gate is open - enter the inner chamber";
       if (this.phase === "boss") objective = `Defeat ${level.boss === "mini" ? "the Abyss Vanguard" : "the Elemental Overlord"}`;
@@ -38663,7 +38865,7 @@ void main() {
     ]).filter(Boolean);
     const sets = [
       [
-        placement("stairs_wide.gltf.glb", -12.5, 25, Math.PI / 2, 0.72, 0, { collision: [1.8, 2.6] }),
+        placement("stairs_wide.gltf.glb", -12.5, 25, Math.PI / 2, 0.72, 0, { collision: [1.8, 2.6], solid: true }),
         placement("crates_stacked.gltf.glb", -12, 19, 0.35, 1, 0, { collision: [1.1, 1.2], solid: true }),
         placement("barrel_small_stack.gltf.glb", 12, 17, -0.4, 1, 0, { collision: [1, 0.65], solid: true }),
         placement("rubble_large.gltf.glb", -10, -18, 0.2, 0.55, 0, { collision: [1.25, 0.85], solid: true }),
@@ -38688,7 +38890,7 @@ void main() {
         placement("torch_lit.gltf.glb", 8.35, -7, -Math.PI / 2, 1.2, 2.15)
       ],
       [
-        placement("stairs_wide.gltf.glb", 11.5, -7.5, -Math.PI / 2, 0.8, 0, { collision: [2.7, 1.8] }),
+        placement("stairs_wide.gltf.glb", 11.5, -7.5, -Math.PI / 2, 0.8, 0, { collision: [2.7, 1.8], solid: true }),
         placement("chest_gold.glb", 12, 8, -0.6, 1, 0, { collision: [1, 0.9], solid: true }),
         placement("crates_stacked.gltf.glb", -12, -8, 0.2, 1, 0, { collision: [1.1, 1.2], solid: true }),
         placement("rubble_large.gltf.glb", -7, 8.5, -0.3, 0.62, 0, { collision: [1.1, 0.85], solid: true }),
@@ -38703,7 +38905,7 @@ void main() {
         placement("pillar_decorated.gltf.glb", 9, 4, 0, 1.15, 0, { collision: [0.85, 0.85], solid: true })
       ],
       [
-        placement("stairs_wide.gltf.glb", 0, 8.5, Math.PI, 0.75, 0, { collision: [2.5, 1.7] }),
+        placement("stairs_wide.gltf.glb", 0, 8.5, Math.PI, 0.75, 0, { collision: [2.5, 1.7], solid: true }),
         placement("pillar_decorated.gltf.glb", -7.5, 0, 0, 1.25, 0, { collision: [0.9, 0.9], solid: true }),
         placement("pillar_decorated.gltf.glb", 7.5, 0, 0, 1.25, 0, { collision: [0.9, 0.9], solid: true }),
         placement("rubble_large.gltf.glb", 0, -8.5, 0, 0.58, 0, { collision: [1.05, 0.82], solid: true }),
@@ -38976,7 +39178,8 @@ void main() {
     });
     const portal = createPortal();
     const shard = createShard();
-    parent.add(portal, shard);
+    const healthDrops = new Group();
+    parent.add(portal, shard, healthDrops);
     let levelIndex = 0;
     return {
       groups,
@@ -38996,6 +39199,7 @@ void main() {
         const healthPickup = groups[index].userData.healthPickup;
         healthPickup.userData.collected = false;
         healthPickup.visible = true;
+        healthDrops.clear();
         const theme = MAP_THEMES[index];
         const layout = LEVEL_LAYOUTS[index];
         portal.position.set(layout.portal[0], 1.35, layout.portal[1]);
@@ -39043,6 +39247,23 @@ void main() {
         pickup.userData.collected = true;
         pickup.visible = false;
         return true;
+      },
+      dropHealth(position) {
+        const pickup = createHealthPickup([position.x, position.z]);
+        pickup.position.y = 0.65;
+        pickup.scale.setScalar(0.62);
+        pickup.userData.drop = true;
+        healthDrops.add(pickup);
+      },
+      collectHealthDrops(position, range = 1.1) {
+        let count = 0;
+        [...healthDrops.children].forEach((pickup) => {
+          if (Math.hypot(pickup.position.x - position.x, pickup.position.z - position.z) <= range) {
+            healthDrops.remove(pickup);
+            count += 1;
+          }
+        });
+        return count;
       },
       startObjectives() {
         var _a3;
@@ -39110,6 +39331,10 @@ void main() {
           pickup.rotation.y = elapsed * 1.6;
           pickup.position.y = 1.1 + Math.sin(elapsed * 2.7) * 0.1;
         }
+        healthDrops.children.forEach((pickup2, index) => {
+          pickup2.rotation.y = elapsed * 1.8 + index;
+          pickup2.position.y = 0.65 + Math.sin(elapsed * 3 + index) * 0.08;
+        });
       }
     };
   }
@@ -39838,6 +40063,22 @@ void main() {
         this.effects.spawnImpact(this.impactPosition, attack.color);
         this.cameraRig.addShake(combatSnapshot2.blocking ? 0.07 : 0.14, 0.24);
       });
+      this.targets.forEach((target) => {
+        var _a3, _b2;
+        if (!this.enabled || target.dead || !((_a3 = target.group) == null ? void 0 : _a3.visible)) return;
+        const dx = this.player.position.x - target.group.position.x;
+        const dz = this.player.position.z - target.group.position.z;
+        const distance = Math.hypot(dx, dz);
+        const minimum = 0.48 + ((_b2 = target.hitRadius) != null ? _b2 : 0.58);
+        if (distance >= minimum) return;
+        const nx = distance > 1e-3 ? dx / distance : 1;
+        const nz = distance > 1e-3 ? dz / distance : 0;
+        const push = (minimum - distance) * 0.5;
+        this.player.position.x += nx * push;
+        this.player.position.z += nz * push;
+        target.group.position.x -= nx * push;
+        target.group.position.z -= nz * push;
+      });
       if (combatSnapshot2.attackSerial !== this.lastAttackSerial) {
         this.lastAttackSerial = combatSnapshot2.attackSerial;
         this.hitTargets.clear();
@@ -40496,12 +40737,20 @@ void main() {
       this.ambient = null;
       this.muted = false;
       this.available = Boolean(AudioContextClass);
+      this.music = typeof Audio !== "undefined" ? new Audio(new URL("audio/background-theme.mp3", document.baseURI).toString()) : null;
+      if (this.music) {
+        this.music.loop = true;
+        this.music.volume = 0.2;
+        this.music.preload = "auto";
+      }
     }
     async unlock() {
       if (!this.available) return false;
       try {
         if (!this.context) this.createGraph();
         if (this.context.state === "suspended") await this.context.resume();
+        if (this.music && !this.muted) void this.music.play().catch(() => {
+        });
         return this.context.state === "running";
       } catch (e) {
         this.available = false;
@@ -40534,6 +40783,11 @@ void main() {
     }
     toggleMuted() {
       this.muted = !this.muted;
+      if (this.music) {
+        this.music.muted = this.muted;
+        if (!this.muted) void this.music.play().catch(() => {
+        });
+      }
       if (this.master && this.context) {
         this.master.gain.cancelScheduledValues(this.context.currentTime);
         this.master.gain.setTargetAtTime(this.muted ? 0 : 0.34, this.context.currentTime, 0.025);
@@ -40594,6 +40848,9 @@ void main() {
       this.tone({ frequency: victory ? 220 : 82, endFrequency: victory ? 440 : 48, duration: 0.55, volume: 0.11, type: "triangle" });
       return true;
     }
+    menu() {
+      return this.tone({ frequency: 310, endFrequency: 560, duration: 0.16, volume: 0.08, type: "triangle" });
+    }
   };
 
   // src/ui/CampaignUI.js
@@ -40652,6 +40909,8 @@ void main() {
   var walkSpeedValue = document.querySelector("#walk-speed-value");
   var runSpeedControl = document.querySelector("#run-speed-control");
   var runSpeedValue = document.querySelector("#run-speed-value");
+  var playerNameInput = document.querySelector("#player-name");
+  var guestButton = document.querySelector("#guest-button");
   if (!supportsWebGL2(canvas)) {
     errorPanel.hidden = false;
     renderStatus.textContent = "Renderer unavailable";
@@ -40766,6 +41025,36 @@ void main() {
     playerCombat,
     playerController
   });
+  var profileLabel = (() => {
+    const labelCanvas = document.createElement("canvas");
+    labelCanvas.width = 512;
+    labelCanvas.height = 96;
+    const context = labelCanvas.getContext("2d");
+    const texture = new CanvasTexture(labelCanvas);
+    texture.colorSpace = SRGBColorSpace;
+    const sprite = new Sprite(new SpriteMaterial({ map: texture, transparent: true, depthTest: false }));
+    sprite.position.set(0, 2.9, 0);
+    sprite.scale.set(1.9, 0.36, 1);
+    sprite.visible = false;
+    world.player.add(sprite);
+    return { sprite, context, texture };
+  })();
+  function setPlayerProfile(username, guest) {
+    const clean = String(username != null ? username : "").trim().slice(0, 16);
+    campaign.setProfile({ username: clean, guest });
+    profileLabel.sprite.visible = Boolean(clean);
+    if (!clean) return;
+    const { context, texture } = profileLabel;
+    context.clearRect(0, 0, 512, 96);
+    context.font = "600 44px sans-serif";
+    context.textAlign = "center";
+    context.textBaseline = "middle";
+    context.fillStyle = "#dffcff";
+    context.shadowColor = "#000";
+    context.shadowBlur = 8;
+    context.fillText(clean, 256, 48);
+    texture.needsUpdate = true;
+  }
   var hud = new HUD();
   var menus = new MenuController();
   var uiAnimations = new UIAnimations(document.querySelector("#encounter-banner"));
@@ -40823,8 +41112,17 @@ void main() {
       (_a3 = document.exitPointerLock) == null ? void 0 : _a3.call(document);
     }
   }
-  function enterArena(continueRun = false) {
+  function enterArena(continueRun = false, guest = false) {
     void audio.unlock();
+    if (!continueRun) {
+      const name = playerNameInput.value.trim();
+      if (!guest && !name) {
+        playerNameInput.focus();
+        return;
+      }
+      setPlayerProfile(guest ? "Guest" : name, guest);
+      audio.menu();
+    }
     if (!gameState.transition(GAME_STATES.PLAYING)) return;
     if (continueRun) campaign.continueFromCheckpoint();
     else campaign.startNew();
@@ -40836,7 +41134,8 @@ void main() {
   function reloadGame() {
     window.location.assign(window.location.pathname);
   }
-  menus.bind({ start: () => enterArena(false), resume: resumeGame, restart: reloadGame, menu: reloadGame });
+  menus.bind({ start: () => enterArena(false, false), resume: resumeGame, restart: reloadGame, menu: reloadGame });
+  guestButton.addEventListener("click", () => enterArena(false, true));
   document.querySelector("#continue-button").addEventListener("click", () => enterArena(true));
   campaignUI.setContinueAvailable(campaign.hasCheckpoint);
   campaignUI.bindAction(() => {

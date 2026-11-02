@@ -45,6 +45,23 @@ export class CombatSystem {
       this.cameraRig.addShake(combatSnapshot.blocking ? 0.07 : 0.14, 0.24);
     });
 
+    // Keep the hero and living enemies from occupying the same physical space.
+    this.targets.forEach((target) => {
+      if (!this.enabled || target.dead || !target.group?.visible) return;
+      const dx = this.player.position.x - target.group.position.x;
+      const dz = this.player.position.z - target.group.position.z;
+      const distance = Math.hypot(dx, dz);
+      const minimum = 0.48 + (target.hitRadius ?? 0.58);
+      if (distance >= minimum) return;
+      const nx = distance > 0.001 ? dx / distance : 1;
+      const nz = distance > 0.001 ? dz / distance : 0;
+      const push = (minimum - distance) * 0.5;
+      this.player.position.x += nx * push;
+      this.player.position.z += nz * push;
+      target.group.position.x -= nx * push;
+      target.group.position.z -= nz * push;
+    });
+
     if (combatSnapshot.attackSerial !== this.lastAttackSerial) {
       this.lastAttackSerial = combatSnapshot.attackSerial;
       this.hitTargets.clear();

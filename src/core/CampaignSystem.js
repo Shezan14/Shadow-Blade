@@ -54,6 +54,7 @@ export class CampaignSystem {
     this.activatedSeals = 0;
     this.interactQueued = false;
     this.transitionTarget = '';
+    this.profile = { guest: false, username: '' };
     this.onKeyDown = (event) => {
       if (event.code === CONFIG.controls.interact && !event.repeat) this.interactQueued = true;
     };
@@ -81,7 +82,8 @@ export class CampaignSystem {
 
   readCheckpoint() {
     try {
-      const saved = JSON.parse(this.storage?.getItem('shadowBladeCheckpoint'));
+      if (this.profile.guest) return null;
+      const saved = JSON.parse(this.storage?.getItem(this.checkpointKey));
       if (!saved || !Number.isInteger(saved.level) || saved.level < 1 || saved.level >= CAMPAIGN_LEVELS.length) return null;
       return saved;
     } catch {
@@ -91,18 +93,25 @@ export class CampaignSystem {
 
   saveCheckpoint() {
     try {
-      this.storage?.setItem('shadowBladeCheckpoint', JSON.stringify({ level: Math.min(this.levelIndex + 1, 4), shards: this.shards }));
+      if (!this.profile.guest) this.storage?.setItem(this.checkpointKey, JSON.stringify({ level: Math.min(this.levelIndex + 1, 4), shards: this.shards }));
     } catch {
       // Storage can be unavailable in strict privacy modes; the active run still continues.
     }
   }
 
   startNew() {
-    try { this.storage?.removeItem('shadowBladeCheckpoint'); } catch { /* no-op */ }
+    try { if (!this.profile.guest) this.storage?.removeItem(this.checkpointKey); } catch { /* no-op */ }
     this.levelIndex = 0;
     this.shards = 0;
     this.complete = false;
     this.prepareLevel();
+  }
+
+  get checkpointKey() { return this.profile.username ? `shadowBladeCheckpoint:${this.profile.username}` : 'shadowBladeCheckpoint'; }
+
+  setProfile({ username = '', guest = false } = {}) {
+    this.profile = { username: String(username).trim().slice(0, 16), guest: Boolean(guest) };
+    this.emit('profile');
   }
 
   continueFromCheckpoint() {
@@ -196,6 +205,7 @@ export class CampaignSystem {
       enemy.speedScale = 1.35 + (difficulty - 1) * 0.55;
       enemy.damageable.maxHealth = Math.round(enemy.stats.maxHealth * difficulty);
       enemy.damageable.reset();
+      enemy.healthDropSpawned = false;
       const fallbackSpawns = [[-2.8, -2.5], [3.2, -2.2], [0.2, -4.8]];
       const spawn = this.maps.getSpawn?.(spawnIndex) ?? fallbackSpawns[spawnIndex];
       enemy.spawnPosition.set(spawn[0], 0, spawn[1]);
@@ -212,7 +222,7 @@ export class CampaignSystem {
     if (this.levelIndex === CAMPAIGN_LEVELS.length - 1) {
       this.phase = 'complete';
       this.complete = true;
-      try { this.storage?.removeItem('shadowBladeCheckpoint'); } catch { /* no-op */ }
+      try { if (!this.profile.guest) this.storage?.removeItem(this.checkpointKey); } catch { /* no-op */ }
       this.emit('complete');
       return;
     }
@@ -253,8 +263,19 @@ export class CampaignSystem {
       this.playerCombat.health.heal(35);
       this.emit('heal');
     }
+    const drops = this.maps.collectHealthDrops?.(this.player.position) ?? 0;
+    if (drops) {
+      this.playerCombat.health.heal(drops * 22);
+      this.emit('heal');
+    }
+    this.activeEnemies.forEach((enemy) => {
+      if (enemy.dead && !enemy.healthDropSpawned) {
+        enemy.healthDropSpawned = true;
+        this.maps.dropHealth?.(enemy.group.position);
+      }
+    });
     if (this.phase === 'explore') {
-      if (this.interactQueued && this.maps.activateNearbySeal?.(this.player.position)) {
+      if (this.maps.activateNearbySeal?.(this.player.position)) {
         this.activatedSeals += 1;
         this.emit('objective');
         if (this.activatedSeals >= this.sealCount) {
@@ -306,7 +327,7 @@ export class CampaignSystem {
   getSnapshot() {
     const level = CAMPAIGN_LEVELS[this.levelIndex] ?? CAMPAIGN_LEVELS.at(-1);
     let objective = 'Enter the arena';
-    if (this.phase === 'explore') objective = `Explore and activate elemental seals ${this.activatedSeals}/${this.sealCount} - press E nearby`;
+    if (this.phase === 'explore') objective = `Explore and activate elemental seals ${this.activatedSeals}/${this.sealCount}`;
     if (this.phase === 'combat') objective = `Clear guard wave ${this.waveIndex + 1} of ${level.waves.length}`;
     if (this.phase === 'boss_gate') objective = 'The boss gate is open - enter the inner chamber';
     if (this.phase === 'boss') objective = `Defeat ${level.boss === 'mini' ? 'the Abyss Vanguard' : 'the Elemental Overlord'}`;

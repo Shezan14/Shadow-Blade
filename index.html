@@ -32,9 +32,16 @@
 
       <section id="start-screen" class="start-screen">
         <div class="start-actions">
+          <label class="profile-entry">Player name
+            <input id="player-name" maxlength="16" autocomplete="username" placeholder="Enter username" />
+          </label>
           <button id="start-button" type="button">
             <span>New campaign</span>
-            <small>Begin at the Fire Courtyard</small>
+            <small>Login and save progress</small>
+          </button>
+          <button id="guest-button" class="continue-button" type="button">
+            <span>Play as guest</span>
+            <small>Progress will not be saved</small>
           </button>
           <button id="continue-button" class="continue-button" type="button" hidden>
             <span>Continue journey</span>
@@ -45,7 +52,7 @@
           <span><kbd>WASD</kbd> Move</span>
           <span><kbd>Shift</kbd> Run</span>
           <span><kbd>Space</kbd> Jump / Dodge</span>
-          <span><kbd>E</kbd> Interact</span>
+          <span>Walk onto pickups</span>
           <span><kbd>Mouse</kbd> Orbit / Zoom</span>
           <span><kbd>V</kbd> View Mode</span>
           <span><kbd>LMB</kbd> Sword / Combo</span>
