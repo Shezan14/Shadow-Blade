@@ -3,7 +3,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 const loader = new GLTFLoader();
 const cache = new Map();
-const assetUrl = (path) => new URL(path, document.baseURI).toString();
+const assetUrl = (path) => new URL(path, typeof document !== 'undefined' ? document.baseURI : 'http://localhost/').toString();
 
 function loadModel(file) {
   if (!cache.has(file)) {

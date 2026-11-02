@@ -37332,7 +37332,7 @@ void main() {
 
   // src/characters/RiggedCharacter.js
   var loader = new GLTFLoader();
-  var assetUrl = (path) => new URL(path, document.baseURI).toString();
+  var assetUrl = (path) => new URL(path, typeof document !== "undefined" ? document.baseURI : "http://localhost/").toString();
   var PLAYER_CLIPS = Object.freeze({
     idle: "Idle",
     walk: "Walking_A",
@@ -38612,7 +38612,7 @@ void main() {
   // src/scene/KayKitEnvironment.js
   var loader2 = new GLTFLoader();
   var cache = /* @__PURE__ */ new Map();
-  var assetUrl2 = (path) => new URL(path, document.baseURI).toString();
+  var assetUrl2 = (path) => new URL(path, typeof document !== "undefined" ? document.baseURI : "http://localhost/").toString();
   function loadModel(file) {
     if (!cache.has(file)) {
       cache.set(file, loader2.loadAsync(assetUrl2(`models/kaykit-dungeon/${file}`)).then((gltf) => gltf.scene));

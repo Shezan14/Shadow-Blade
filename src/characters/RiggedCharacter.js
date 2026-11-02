@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 const loader = new GLTFLoader();
-const assetUrl = (path) => new URL(path, document.baseURI).toString();
+const assetUrl = (path) => new URL(path, typeof document !== 'undefined' ? document.baseURI : 'http://localhost/').toString();
 
 const PLAYER_CLIPS = Object.freeze({
   idle: 'Idle',
