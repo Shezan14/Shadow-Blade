@@ -168,3 +168,6 @@ The project was developed and verified one phase at a time: setup, world, player
 ## Known limitations
 
 Desktop keyboard and mouse are required; mobile controls are outside the current scope. Campaign checkpoints use browser-local storage and therefore do not synchronize between different browsers or private sessions. A classic compatibility bundle is available with `?classic=1` for browser profiles that block JavaScript modules.
+# Shadow Blade
+
+Live deployment is provided through GitHub Pages.
