@@ -61,7 +61,7 @@ function mapProps(index, layout) {
   ]).filter(Boolean);
   const sets = [
     [
-      placement('stairs_wide.gltf.glb', -12.5, 25, Math.PI / 2, 0.72, 0, { collision: [1.8, 2.6], solid: true }),
+      placement('stairs_wide.gltf.glb', -12.5, 25, Math.PI / 2, 0.72, 0, { collision: [1.05, 0.52], solid: true }),
       placement('crates_stacked.gltf.glb', -12, 19, 0.35, 1, 0, { collision: [1.1, 1.2], solid: true }),
       placement('barrel_small_stack.gltf.glb', 12, 17, -0.4, 1, 0, { collision: [1, 0.65], solid: true }),
       placement('rubble_large.gltf.glb', -10, -18, 0.2, 0.55, 0, { collision: [1.25, 0.85], solid: true }),
@@ -86,7 +86,7 @@ function mapProps(index, layout) {
       placement('torch_lit.gltf.glb', 8.35, -7, -Math.PI / 2, 1.2, 2.15),
     ],
     [
-      placement('stairs_wide.gltf.glb', 11.5, -7.5, -Math.PI / 2, 0.8, 0, { collision: [2.7, 1.8], solid: true }),
+      placement('stairs_wide.gltf.glb', 11.5, -7.5, -Math.PI / 2, 0.8, 0, { collision: [1.15, 0.52], solid: true }),
       placement('chest_gold.glb', 12, 8, -0.6, 1, 0, { collision: [1, 0.9], solid: true }),
       placement('crates_stacked.gltf.glb', -12, -8, 0.2, 1, 0, { collision: [1.1, 1.2], solid: true }),
       placement('rubble_large.gltf.glb', -7, 8.5, -0.3, 0.62, 0, { collision: [1.1, 0.85], solid: true }),
@@ -101,7 +101,7 @@ function mapProps(index, layout) {
       placement('pillar_decorated.gltf.glb', 9, 4, 0, 1.15, 0, { collision: [0.85, 0.85], solid: true }),
     ],
     [
-      placement('stairs_wide.gltf.glb', 0, 8.5, Math.PI, 0.75, 0, { collision: [2.5, 1.7], solid: true }),
+      placement('stairs_wide.gltf.glb', 0, 8.5, Math.PI, 0.75, 0, { collision: [1.1, 0.52], solid: true }),
       placement('pillar_decorated.gltf.glb', -7.5, 0, 0, 1.25, 0, { collision: [0.9, 0.9], solid: true }),
       placement('pillar_decorated.gltf.glb', 7.5, 0, 0, 1.25, 0, { collision: [0.9, 0.9], solid: true }),
       placement('rubble_large.gltf.glb', 0, -8.5, 0, 0.58, 0, { collision: [1.05, 0.82], solid: true }),

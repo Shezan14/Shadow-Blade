@@ -17,7 +17,7 @@ const ENEMY_LINES = Object.freeze([
 ]);
 
 export class BattleDialogue {
-  constructor(root = document) {
+  constructor(root = document, audio = null) {
     this.element = root.querySelector('#battle-dialogue');
     this.speaker = this.element.querySelector('strong');
     this.line = this.element.querySelector('p');
@@ -25,9 +25,11 @@ export class BattleDialogue {
     this.nextBossAt = 18;
     this.nextEnemyAt = 8;
     this.hideTimer = null;
+    this.audio = audio;
   }
 
   say(speaker, line) {
+    this.audio?.bark(speaker !== 'CORRUPTED SENTINEL');
     this.speaker.textContent = speaker;
     this.line.textContent = line;
     this.element.hidden = false;

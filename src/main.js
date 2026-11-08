@@ -181,8 +181,8 @@ const hud = new HUD();
 const menus = new MenuController();
 const uiAnimations = new UIAnimations(document.querySelector('#encounter-banner'));
 const campaignUI = new CampaignUI();
-const battleDialogue = new BattleDialogue();
 const audio = new AudioManager();
+const battleDialogue = new BattleDialogue(document, audio);
 
 const collisionHelpers = [world.player, ...world.enemies.map((enemy) => enemy.group), world.bosses.miniBoss.group, world.bosses.finalBoss.group]
   .map((object) => {

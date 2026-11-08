@@ -38866,7 +38866,7 @@ void main() {
     ]).filter(Boolean);
     const sets = [
       [
-        placement("stairs_wide.gltf.glb", -12.5, 25, Math.PI / 2, 0.72, 0, { collision: [1.8, 2.6], solid: true }),
+        placement("stairs_wide.gltf.glb", -12.5, 25, Math.PI / 2, 0.72, 0, { collision: [1.05, 0.52], solid: true }),
         placement("crates_stacked.gltf.glb", -12, 19, 0.35, 1, 0, { collision: [1.1, 1.2], solid: true }),
         placement("barrel_small_stack.gltf.glb", 12, 17, -0.4, 1, 0, { collision: [1, 0.65], solid: true }),
         placement("rubble_large.gltf.glb", -10, -18, 0.2, 0.55, 0, { collision: [1.25, 0.85], solid: true }),
@@ -38891,7 +38891,7 @@ void main() {
         placement("torch_lit.gltf.glb", 8.35, -7, -Math.PI / 2, 1.2, 2.15)
       ],
       [
-        placement("stairs_wide.gltf.glb", 11.5, -7.5, -Math.PI / 2, 0.8, 0, { collision: [2.7, 1.8], solid: true }),
+        placement("stairs_wide.gltf.glb", 11.5, -7.5, -Math.PI / 2, 0.8, 0, { collision: [1.15, 0.52], solid: true }),
         placement("chest_gold.glb", 12, 8, -0.6, 1, 0, { collision: [1, 0.9], solid: true }),
         placement("crates_stacked.gltf.glb", -12, -8, 0.2, 1, 0, { collision: [1.1, 1.2], solid: true }),
         placement("rubble_large.gltf.glb", -7, 8.5, -0.3, 0.62, 0, { collision: [1.1, 0.85], solid: true }),
@@ -38906,7 +38906,7 @@ void main() {
         placement("pillar_decorated.gltf.glb", 9, 4, 0, 1.15, 0, { collision: [0.85, 0.85], solid: true })
       ],
       [
-        placement("stairs_wide.gltf.glb", 0, 8.5, Math.PI, 0.75, 0, { collision: [2.5, 1.7], solid: true }),
+        placement("stairs_wide.gltf.glb", 0, 8.5, Math.PI, 0.75, 0, { collision: [1.1, 0.52], solid: true }),
         placement("pillar_decorated.gltf.glb", -7.5, 0, 0, 1.25, 0, { collision: [0.9, 0.9], solid: true }),
         placement("pillar_decorated.gltf.glb", 7.5, 0, 0, 1.25, 0, { collision: [0.9, 0.9], solid: true }),
         placement("rubble_large.gltf.glb", 0, -8.5, 0, 0.58, 0, { collision: [1.05, 0.82], solid: true }),
@@ -40749,6 +40749,8 @@ void main() {
       this.musicMode = "exploration";
       this.musicFade = null;
       this.swordSounds = typeof Audio !== "undefined" ? ["sword-swing-1.ogg", "sword-swing-2.ogg", "sword-swing-3.ogg"].map((file) => new Audio(asset(file))) : [];
+      this.enemyBarks = typeof Audio !== "undefined" ? ["enemy-bark-1.ogg", "enemy-bark-2.ogg"].map((file) => new Audio(asset(file))) : [];
+      this.bossBark = typeof Audio !== "undefined" ? new Audio(asset("boss-bark.ogg")) : null;
       Object.values(this.musicTracks).forEach((track) => {
         track.loop = true;
         track.volume = 0;
@@ -40758,6 +40760,14 @@ void main() {
         sound.volume = 0.48;
         sound.preload = "auto";
       });
+      this.enemyBarks.forEach((sound) => {
+        sound.volume = 0.38;
+        sound.preload = "auto";
+      });
+      if (this.bossBark) {
+        this.bossBark.volume = 0.52;
+        this.bossBark.preload = "auto";
+      }
     }
     async unlock() {
       if (!this.available) return false;
@@ -40809,6 +40819,10 @@ void main() {
       this.swordSounds.forEach((sound) => {
         sound.muted = this.muted;
       });
+      this.enemyBarks.forEach((sound) => {
+        sound.muted = this.muted;
+      });
+      if (this.bossBark) this.bossBark.muted = this.muted;
       if (this.master && this.context) {
         this.master.gain.cancelScheduledValues(this.context.currentTime);
         this.master.gain.setTargetAtTime(this.muted ? 0 : 0.34, this.context.currentTime, 0.025);
@@ -40880,6 +40894,16 @@ void main() {
       const started = this.tone({ frequency: 980 + combo * 85, endFrequency: 150, duration: 0.2, volume: 0.18, type: "sawtooth" });
       this.tone({ frequency: 160 + combo * 25, endFrequency: 58, duration: 0.1, volume: 0.11, type: "square", delay: 0.025 });
       return started;
+    }
+    bark(boss = false) {
+      if (this.muted) return false;
+      const sample = boss ? this.bossBark : this.enemyBarks[Math.floor(Math.random() * this.enemyBarks.length)];
+      if (!sample) return false;
+      const voice = sample.cloneNode();
+      voice.volume = sample.volume;
+      void voice.play().catch(() => {
+      });
+      return true;
     }
     hit() {
       this.tone({ frequency: 95, endFrequency: 42, duration: 0.11, volume: 0.16, type: "square" });
@@ -40976,7 +41000,7 @@ void main() {
     "Corner the intruder!"
   ]);
   var BattleDialogue = class {
-    constructor(root = document) {
+    constructor(root = document, audio2 = null) {
       this.element = root.querySelector("#battle-dialogue");
       this.speaker = this.element.querySelector("strong");
       this.line = this.element.querySelector("p");
@@ -40984,8 +41008,11 @@ void main() {
       this.nextBossAt = 18;
       this.nextEnemyAt = 8;
       this.hideTimer = null;
+      this.audio = audio2;
     }
     say(speaker, line) {
+      var _a3;
+      (_a3 = this.audio) == null ? void 0 : _a3.bark(speaker !== "CORRUPTED SENTINEL");
       this.speaker.textContent = speaker;
       this.line.textContent = line;
       this.element.hidden = false;
@@ -41179,8 +41206,8 @@ void main() {
   var menus = new MenuController();
   var uiAnimations = new UIAnimations(document.querySelector("#encounter-banner"));
   var campaignUI = new CampaignUI();
-  var battleDialogue = new BattleDialogue();
   var audio = new AudioManager();
+  var battleDialogue = new BattleDialogue(document, audio);
   var collisionHelpers = [world.player, ...world.enemies.map((enemy) => enemy.group), world.bosses.miniBoss.group, world.bosses.finalBoss.group].map((object) => {
     const helper = new BoxHelper(object, 5242849);
     helper.visible = false;
