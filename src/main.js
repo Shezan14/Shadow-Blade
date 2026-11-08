@@ -21,6 +21,7 @@ import { UIAnimations } from './ui/UIAnimations.js';
 import { DebugPanel } from './ui/DebugPanel.js';
 import { AudioManager } from './audio/AudioManager.js';
 import { CampaignUI } from './ui/CampaignUI.js';
+import { BattleDialogue } from './ui/BattleDialogue.js';
 
 const canvas = document.querySelector('#game-canvas');
 const errorPanel = document.querySelector('#webgl-error');
@@ -180,6 +181,7 @@ const hud = new HUD();
 const menus = new MenuController();
 const uiAnimations = new UIAnimations(document.querySelector('#encounter-banner'));
 const campaignUI = new CampaignUI();
+const battleDialogue = new BattleDialogue();
 const audio = new AudioManager();
 
 const collisionHelpers = [world.player, ...world.enemies.map((enemy) => enemy.group), world.bosses.miniBoss.group, world.bosses.finalBoss.group]
@@ -480,6 +482,7 @@ function updateGameplay(delta) {
   world.update(time.elapsed, delta);
   cameraRig.update(world.player.position, delta);
   uiAnimations.announceStage(bossSnapshot.stage);
+  battleDialogue.update({ elapsed: time.elapsed, boss: bossSnapshot, playerPosition: world.player.position, enemyHit: frameHits > 0 });
   campaignSnapshot = campaign.update(delta);
   campaignUI.update(campaignSnapshot, true);
 

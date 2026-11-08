@@ -201,6 +201,7 @@ export class BossSystem {
       name: this.activeBoss?.config.name ?? '',
       healthRatio: this.activeBoss?.healthRatio ?? 0,
       phase: this.activeBoss?.phase ?? 0,
+      position: this.activeBoss?.group?.position ?? null,
       complete: this.completed,
     };
   }

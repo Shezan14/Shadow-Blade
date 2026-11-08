@@ -33745,13 +33745,14 @@ void main() {
       return this.getSnapshot();
     }
     getSnapshot() {
-      var _a3, _b2, _c, _d, _e, _f, _g;
+      var _a3, _b2, _c, _d, _e, _f, _g, _h, _i, _j;
       return {
         stage: this.stage,
         active: Boolean(((_a3 = this.activeBoss) == null ? void 0 : _a3.active) && !this.completed),
         name: (_c = (_b2 = this.activeBoss) == null ? void 0 : _b2.config.name) != null ? _c : "",
         healthRatio: (_e = (_d = this.activeBoss) == null ? void 0 : _d.healthRatio) != null ? _e : 0,
         phase: (_g = (_f = this.activeBoss) == null ? void 0 : _f.phase) != null ? _g : 0,
+        position: (_j = (_i = (_h = this.activeBoss) == null ? void 0 : _h.group) == null ? void 0 : _i.position) != null ? _j : null,
         complete: this.completed
       };
     }
@@ -40897,6 +40898,68 @@ void main() {
     }
   };
 
+  // src/ui/BattleDialogue.js
+  var BOSS_LINES = Object.freeze([
+    "Is that all the strength you have?",
+    "You run, but the shadows always follow.",
+    "Are you tired, little blade?",
+    "Stand and face your end.",
+    "Your fear is louder than your sword."
+  ]);
+  var ENEMY_LINES = Object.freeze([
+    "Break their guard!",
+    "The blade is ours!",
+    "Do not let them pass!",
+    "Corner the intruder!"
+  ]);
+  var BattleDialogue = class {
+    constructor(root = document) {
+      this.element = root.querySelector("#battle-dialogue");
+      this.speaker = this.element.querySelector("strong");
+      this.line = this.element.querySelector("p");
+      this.lastBossLine = -1;
+      this.nextBossAt = 18;
+      this.nextEnemyAt = 8;
+      this.hideTimer = null;
+    }
+    say(speaker, line) {
+      this.speaker.textContent = speaker;
+      this.line.textContent = line;
+      this.element.hidden = false;
+      this.element.classList.remove("is-visible");
+      void this.element.offsetWidth;
+      this.element.classList.add("is-visible");
+      clearTimeout(this.hideTimer);
+      this.hideTimer = setTimeout(() => {
+        this.element.classList.remove("is-visible");
+        this.element.hidden = true;
+      }, 4200);
+      if ("speechSynthesis" in globalThis) {
+        globalThis.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(line);
+        utterance.rate = 0.82;
+        utterance.pitch = speaker === "ELEMENTAL OVERLORD" ? 0.58 : 0.78;
+        utterance.volume = 0.7;
+        globalThis.speechSynthesis.speak(utterance);
+      }
+    }
+    update({ elapsed, boss, playerPosition, enemyHit }) {
+      var _a3;
+      if ((boss.stage === "mini" || boss.stage === "final") && boss.active) {
+        const distance = boss.position ? Math.hypot(playerPosition.x - boss.position.x, playerPosition.z - boss.position.z) : 0;
+        if (elapsed >= this.nextBossAt || distance > 8 && elapsed >= this.nextBossAt - 6) {
+          this.lastBossLine = (this.lastBossLine + 1) % BOSS_LINES.length;
+          this.say(((_a3 = boss.name) == null ? void 0 : _a3.toUpperCase()) || "THE OVERLORD", BOSS_LINES[this.lastBossLine]);
+          this.nextBossAt = elapsed + 17 + Math.random() * 9;
+        }
+      }
+      if (enemyHit && elapsed >= this.nextEnemyAt && !boss.active) {
+        this.say("CORRUPTED SENTINEL", ENEMY_LINES[Math.floor(Math.random() * ENEMY_LINES.length)]);
+        this.nextEnemyAt = elapsed + 10 + Math.random() * 8;
+      }
+    }
+  };
+
   // src/main.js
   var canvas = document.querySelector("#game-canvas");
   var errorPanel = document.querySelector("#webgl-error");
@@ -41061,6 +41124,7 @@ void main() {
   var menus = new MenuController();
   var uiAnimations = new UIAnimations(document.querySelector("#encounter-banner"));
   var campaignUI = new CampaignUI();
+  var battleDialogue = new BattleDialogue();
   var audio = new AudioManager();
   var collisionHelpers = [world.player, ...world.enemies.map((enemy) => enemy.group), world.bosses.miniBoss.group, world.bosses.finalBoss.group].map((object) => {
     const helper = new BoxHelper(object, 5242849);
@@ -41355,6 +41419,7 @@ void main() {
     world.update(time.elapsed, delta);
     cameraRig.update(world.player.position, delta);
     uiAnimations.announceStage(bossSnapshot.stage);
+    battleDialogue.update({ elapsed: time.elapsed, boss: bossSnapshot, playerPosition: world.player.position, enemyHit: frameHits > 0 });
     campaignSnapshot = campaign.update(delta);
     campaignUI.update(campaignSnapshot, true);
     const resolvedState = resolveGameplayState({
