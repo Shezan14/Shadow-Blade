@@ -9,11 +9,20 @@ export class AudioManager {
     this.muted = false;
     this.available = Boolean(AudioContextClass);
     const asset = (file) => new URL(`audio/${file}`, typeof document !== 'undefined' ? document.baseURI : 'http://localhost/').toString();
-    this.music = typeof Audio !== 'undefined' ? new Audio(asset('background-theme.mp3')) : null;
+    this.musicTracks = typeof Audio !== 'undefined'
+      ? Object.fromEntries([
+        ['exploration', new Audio(asset('background-theme.mp3'))],
+        ['combat', new Audio(asset('combat-loop.mp3'))],
+        ['boss', new Audio(asset('boss-loop.mp3'))],
+      ])
+      : {};
+    this.music = this.musicTracks.exploration ?? null;
+    this.musicMode = 'exploration';
+    this.musicFade = null;
     this.swordSounds = typeof Audio !== 'undefined'
       ? ['sword-swing-1.ogg', 'sword-swing-2.ogg', 'sword-swing-3.ogg'].map((file) => new Audio(asset(file)))
       : [];
-    if (this.music) { this.music.loop = true; this.music.volume = 0.2; this.music.preload = 'auto'; }
+    Object.values(this.musicTracks).forEach((track) => { track.loop = true; track.volume = 0; track.preload = 'auto'; });
     this.swordSounds.forEach((sound) => { sound.volume = 0.48; sound.preload = 'auto'; });
   }
 
@@ -22,7 +31,8 @@ export class AudioManager {
     try {
       if (!this.context) this.createGraph();
       if (this.context.state === 'suspended') await this.context.resume();
-      if (this.music && !this.muted) void this.music.play().catch(() => {});
+      Object.values(this.musicTracks).forEach((track) => { if (!this.muted) void track.play().catch(() => {}); });
+      this.setMusicMode(this.musicMode, true);
       return this.context.state === 'running';
     } catch {
       this.available = false;
@@ -58,7 +68,7 @@ export class AudioManager {
 
   toggleMuted() {
     this.muted = !this.muted;
-    if (this.music) { this.music.muted = this.muted; if (!this.muted) void this.music.play().catch(() => {}); }
+    Object.values(this.musicTracks).forEach((track) => { track.muted = this.muted; if (!this.muted) void track.play().catch(() => {}); });
     this.swordSounds.forEach((sound) => { sound.muted = this.muted; });
     if (this.master && this.context) {
       this.master.gain.cancelScheduledValues(this.context.currentTime);
@@ -71,6 +81,31 @@ export class AudioManager {
     if (!this.ambient || !this.context) return;
     const active = state === 'PLAYING' || state === 'BOSS_FIGHT';
     this.ambient.gain.setTargetAtTime(active ? 0.055 : 0.025, this.context.currentTime, 0.3);
+  }
+
+  setMusicMode(mode = 'exploration', immediate = false) {
+    if (!this.musicTracks[mode]) mode = 'exploration';
+    if (mode === this.musicMode && !immediate) return;
+    this.musicMode = mode;
+    const levels = { exploration: 0.22, combat: 0.26, boss: 0.3 };
+    const tracks = Object.entries(this.musicTracks);
+    tracks.forEach(([, track]) => { if (!this.muted) void track.play().catch(() => {}); });
+    if (this.musicFade) clearInterval(this.musicFade);
+    if (immediate) {
+      tracks.forEach(([id, track]) => { track.volume = id === mode && !this.muted ? levels[id] : 0; });
+      return;
+    }
+    let step = 0;
+    const start = Object.fromEntries(tracks.map(([id, track]) => [id, track.volume]));
+    this.musicFade = setInterval(() => {
+      step += 1;
+      const progress = Math.min(1, step / 18);
+      tracks.forEach(([id, track]) => {
+        const target = id === mode && !this.muted ? levels[id] : 0;
+        track.volume = start[id] + (target - start[id]) * progress;
+      });
+      if (progress >= 1) { clearInterval(this.musicFade); this.musicFade = null; }
+    }, 55);
   }
 
   tone({ frequency = 220, endFrequency = frequency, duration = 0.12, volume = 0.12, type = 'sine', delay = 0 }) {

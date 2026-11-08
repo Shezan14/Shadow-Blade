@@ -484,6 +484,7 @@ function updateGameplay(delta) {
   uiAnimations.announceStage(bossSnapshot.stage);
   battleDialogue.update({ elapsed: time.elapsed, boss: bossSnapshot, playerPosition: world.player.position, enemyHit: frameHits > 0 });
   campaignSnapshot = campaign.update(delta);
+  audio.setMusicMode(bossSnapshot.active ? 'boss' : campaignSnapshot.phase === 'combat' ? 'combat' : 'exploration');
   campaignUI.update(campaignSnapshot, true);
 
   const resolvedState = resolveGameplayState({

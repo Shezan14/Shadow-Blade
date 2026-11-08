@@ -40732,6 +40732,7 @@ void main() {
   var ELEMENT_FREQUENCIES = Object.freeze({ fire: 110, ice: 440, lightning: 760, wind: 230 });
   var AudioManager = class {
     constructor(AudioContextClass = ((_a3) => (_a3 = globalThis.AudioContext) != null ? _a3 : globalThis.webkitAudioContext)()) {
+      var _a4;
       this.AudioContextClass = AudioContextClass;
       this.context = null;
       this.master = null;
@@ -40739,13 +40740,20 @@ void main() {
       this.muted = false;
       this.available = Boolean(AudioContextClass);
       const asset = (file) => new URL(`audio/${file}`, typeof document !== "undefined" ? document.baseURI : "http://localhost/").toString();
-      this.music = typeof Audio !== "undefined" ? new Audio(asset("background-theme.mp3")) : null;
+      this.musicTracks = typeof Audio !== "undefined" ? Object.fromEntries([
+        ["exploration", new Audio(asset("background-theme.mp3"))],
+        ["combat", new Audio(asset("combat-loop.mp3"))],
+        ["boss", new Audio(asset("boss-loop.mp3"))]
+      ]) : {};
+      this.music = (_a4 = this.musicTracks.exploration) != null ? _a4 : null;
+      this.musicMode = "exploration";
+      this.musicFade = null;
       this.swordSounds = typeof Audio !== "undefined" ? ["sword-swing-1.ogg", "sword-swing-2.ogg", "sword-swing-3.ogg"].map((file) => new Audio(asset(file))) : [];
-      if (this.music) {
-        this.music.loop = true;
-        this.music.volume = 0.2;
-        this.music.preload = "auto";
-      }
+      Object.values(this.musicTracks).forEach((track) => {
+        track.loop = true;
+        track.volume = 0;
+        track.preload = "auto";
+      });
       this.swordSounds.forEach((sound) => {
         sound.volume = 0.48;
         sound.preload = "auto";
@@ -40756,8 +40764,11 @@ void main() {
       try {
         if (!this.context) this.createGraph();
         if (this.context.state === "suspended") await this.context.resume();
-        if (this.music && !this.muted) void this.music.play().catch(() => {
+        Object.values(this.musicTracks).forEach((track) => {
+          if (!this.muted) void track.play().catch(() => {
+          });
         });
+        this.setMusicMode(this.musicMode, true);
         return this.context.state === "running";
       } catch (e) {
         this.available = false;
@@ -40790,11 +40801,11 @@ void main() {
     }
     toggleMuted() {
       this.muted = !this.muted;
-      if (this.music) {
-        this.music.muted = this.muted;
-        if (!this.muted) void this.music.play().catch(() => {
+      Object.values(this.musicTracks).forEach((track) => {
+        track.muted = this.muted;
+        if (!this.muted) void track.play().catch(() => {
         });
-      }
+      });
       this.swordSounds.forEach((sound) => {
         sound.muted = this.muted;
       });
@@ -40808,6 +40819,38 @@ void main() {
       if (!this.ambient || !this.context) return;
       const active = state === "PLAYING" || state === "BOSS_FIGHT";
       this.ambient.gain.setTargetAtTime(active ? 0.055 : 0.025, this.context.currentTime, 0.3);
+    }
+    setMusicMode(mode = "exploration", immediate = false) {
+      if (!this.musicTracks[mode]) mode = "exploration";
+      if (mode === this.musicMode && !immediate) return;
+      this.musicMode = mode;
+      const levels = { exploration: 0.22, combat: 0.26, boss: 0.3 };
+      const tracks = Object.entries(this.musicTracks);
+      tracks.forEach(([, track]) => {
+        if (!this.muted) void track.play().catch(() => {
+        });
+      });
+      if (this.musicFade) clearInterval(this.musicFade);
+      if (immediate) {
+        tracks.forEach(([id, track]) => {
+          track.volume = id === mode && !this.muted ? levels[id] : 0;
+        });
+        return;
+      }
+      let step = 0;
+      const start = Object.fromEntries(tracks.map(([id, track]) => [id, track.volume]));
+      this.musicFade = setInterval(() => {
+        step += 1;
+        const progress = Math.min(1, step / 18);
+        tracks.forEach(([id, track]) => {
+          const target = id === mode && !this.muted ? levels[id] : 0;
+          track.volume = start[id] + (target - start[id]) * progress;
+        });
+        if (progress >= 1) {
+          clearInterval(this.musicFade);
+          this.musicFade = null;
+        }
+      }, 55);
     }
     tone({ frequency = 220, endFrequency = frequency, duration = 0.12, volume = 0.12, type = "sine", delay = 0 }) {
       if (!this.context || this.context.state !== "running" || this.muted) return false;
@@ -40920,7 +40963,11 @@ void main() {
     "You run, but the shadows always follow.",
     "Are you tired, little blade?",
     "Stand and face your end.",
-    "Your fear is louder than your sword."
+    "Your fear is louder than your sword.",
+    "Every step brings you closer to the abyss.",
+    "Your little flames cannot warm this tomb.",
+    "Kneel, and I may grant you silence.",
+    "The veil remembers every fallen hero."
   ]);
   var ENEMY_LINES = Object.freeze([
     "Break their guard!",
@@ -40950,14 +40997,6 @@ void main() {
         this.element.classList.remove("is-visible");
         this.element.hidden = true;
       }, 4200);
-      if ("speechSynthesis" in globalThis) {
-        globalThis.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(line);
-        utterance.rate = 0.82;
-        utterance.pitch = speaker === "ELEMENTAL OVERLORD" ? 0.58 : 0.78;
-        utterance.volume = 0.7;
-        globalThis.speechSynthesis.speak(utterance);
-      }
     }
     update({ elapsed, boss, playerPosition, enemyHit }) {
       var _a3;
@@ -41437,6 +41476,7 @@ void main() {
     uiAnimations.announceStage(bossSnapshot.stage);
     battleDialogue.update({ elapsed: time.elapsed, boss: bossSnapshot, playerPosition: world.player.position, enemyHit: frameHits > 0 });
     campaignSnapshot = campaign.update(delta);
+    audio.setMusicMode(bossSnapshot.active ? "boss" : campaignSnapshot.phase === "combat" ? "combat" : "exploration");
     campaignUI.update(campaignSnapshot, true);
     const resolvedState = resolveGameplayState({
       currentState: gameState.state,

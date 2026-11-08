@@ -4,6 +4,10 @@ const BOSS_LINES = Object.freeze([
   'Are you tired, little blade?',
   'Stand and face your end.',
   'Your fear is louder than your sword.',
+  'Every step brings you closer to the abyss.',
+  'Your little flames cannot warm this tomb.',
+  'Kneel, and I may grant you silence.',
+  'The veil remembers every fallen hero.',
 ]);
 const ENEMY_LINES = Object.freeze([
   'Break their guard!',
@@ -32,14 +36,6 @@ export class BattleDialogue {
     this.element.classList.add('is-visible');
     clearTimeout(this.hideTimer);
     this.hideTimer = setTimeout(() => { this.element.classList.remove('is-visible'); this.element.hidden = true; }, 4200);
-    if ('speechSynthesis' in globalThis) {
-      globalThis.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(line);
-      utterance.rate = 0.82;
-      utterance.pitch = speaker === 'ELEMENTAL OVERLORD' ? 0.58 : 0.78;
-      utterance.volume = 0.7;
-      globalThis.speechSynthesis.speak(utterance);
-    }
   }
 
   update({ elapsed, boss, playerPosition, enemyHit }) {
