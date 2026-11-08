@@ -171,3 +171,7 @@ Desktop keyboard and mouse are required; mobile controls are outside the current
 # Shadow Blade
 
 Live deployment is provided through GitHub Pages.
+
+## Audio credits
+
+- `sword-swing-*.ogg`: “20 Sword Sound Effects (Attacks and Clashes)” by StarNinjas, CC0 1.0, via OpenGameArt.

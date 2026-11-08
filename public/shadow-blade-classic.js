@@ -40738,12 +40738,18 @@ void main() {
       this.ambient = null;
       this.muted = false;
       this.available = Boolean(AudioContextClass);
-      this.music = typeof Audio !== "undefined" ? new Audio(new URL("audio/background-theme.mp3", document.baseURI).toString()) : null;
+      const asset = (file) => new URL(`audio/${file}`, typeof document !== "undefined" ? document.baseURI : "http://localhost/").toString();
+      this.music = typeof Audio !== "undefined" ? new Audio(asset("background-theme.mp3")) : null;
+      this.swordSounds = typeof Audio !== "undefined" ? ["sword-swing-1.ogg", "sword-swing-2.ogg", "sword-swing-3.ogg"].map((file) => new Audio(asset(file))) : [];
       if (this.music) {
         this.music.loop = true;
         this.music.volume = 0.2;
         this.music.preload = "auto";
       }
+      this.swordSounds.forEach((sound) => {
+        sound.volume = 0.48;
+        sound.preload = "auto";
+      });
     }
     async unlock() {
       if (!this.available) return false;
@@ -40789,6 +40795,9 @@ void main() {
         if (!this.muted) void this.music.play().catch(() => {
         });
       }
+      this.swordSounds.forEach((sound) => {
+        sound.muted = this.muted;
+      });
       if (this.master && this.context) {
         this.master.gain.cancelScheduledValues(this.context.currentTime);
         this.master.gain.setTargetAtTime(this.muted ? 0 : 0.34, this.context.currentTime, 0.025);
@@ -40818,6 +40827,13 @@ void main() {
       return true;
     }
     sword(combo = 0) {
+      const sample = this.swordSounds[combo % this.swordSounds.length];
+      if (sample && !this.muted) {
+        const voice = sample.cloneNode();
+        voice.volume = sample.volume;
+        void voice.play().catch(() => {
+        });
+      }
       const started = this.tone({ frequency: 980 + combo * 85, endFrequency: 150, duration: 0.2, volume: 0.18, type: "sawtooth" });
       this.tone({ frequency: 160 + combo * 25, endFrequency: 58, duration: 0.1, volume: 0.11, type: "square", delay: 0.025 });
       return started;
