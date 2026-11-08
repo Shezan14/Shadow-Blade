@@ -40763,12 +40763,12 @@ void main() {
       if (!this.available) return false;
       try {
         if (!this.context) this.createGraph();
-        if (this.context.state === "suspended") await this.context.resume();
         Object.values(this.musicTracks).forEach((track) => {
           if (!this.muted) void track.play().catch(() => {
           });
         });
         this.setMusicMode(this.musicMode, true);
+        if (this.context.state === "suspended") await this.context.resume();
         return this.context.state === "running";
       } catch (e) {
         this.available = false;

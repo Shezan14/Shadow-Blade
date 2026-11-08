@@ -30,9 +30,12 @@ export class AudioManager {
     if (!this.available) return false;
     try {
       if (!this.context) this.createGraph();
-      if (this.context.state === 'suspended') await this.context.resume();
-      Object.values(this.musicTracks).forEach((track) => { if (!this.muted) void track.play().catch(() => {}); });
+      // Must start HTML media while the player's click is still an active browser gesture.
+      Object.values(this.musicTracks).forEach((track) => {
+        if (!this.muted) void track.play().catch(() => {});
+      });
       this.setMusicMode(this.musicMode, true);
+      if (this.context.state === 'suspended') await this.context.resume();
       return this.context.state === 'running';
     } catch {
       this.available = false;
