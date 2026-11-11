@@ -175,4 +175,4 @@ Live deployment is provided through GitHub Pages.
 ## Audio credits
 
 - `sword-swing-*.ogg`: “20 Sword Sound Effects (Attacks and Clashes)” by StarNinjas, CC0 1.0, via OpenGameArt.
-- `enemy-bark-*.ogg` and `boss-bark.ogg`: “80 CC0 Creature SFX” by rubberduck, CC0 1.0, via OpenGameArt.
+- `enemy-taunt-*.wav`: “Aggressive NPC sounds” by mujtaba-io, CC0 1.0, via OpenGameArt.

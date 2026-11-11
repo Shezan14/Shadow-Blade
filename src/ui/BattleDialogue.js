@@ -1,19 +1,10 @@
 const BOSS_LINES = Object.freeze([
-  'Is that all the strength you have?',
-  'You run, but the shadows always follow.',
-  'Are you tired, little blade?',
-  'Stand and face your end.',
-  'Your fear is louder than your sword.',
-  'Every step brings you closer to the abyss.',
-  'Your little flames cannot warm this tomb.',
-  'Kneel, and I may grant you silence.',
-  'The veil remembers every fallen hero.',
+  { line: 'I will kill you!', voice: 1 },
+  { line: 'Hey!', voice: 0 },
 ]);
 const ENEMY_LINES = Object.freeze([
-  'Break their guard!',
-  'The blade is ours!',
-  'Do not let them pass!',
-  'Corner the intruder!',
+  { line: 'Hey!', voice: 0 },
+  { line: 'I will kill you!', voice: 1 },
 ]);
 
 export class BattleDialogue {
@@ -28,10 +19,10 @@ export class BattleDialogue {
     this.audio = audio;
   }
 
-  say(speaker, line) {
-    this.audio?.bark(speaker !== 'CORRUPTED SENTINEL');
+  say(speaker, dialogue) {
+    this.audio?.dialogue(dialogue.voice);
     this.speaker.textContent = speaker;
-    this.line.textContent = line;
+    this.line.textContent = dialogue.line;
     this.element.hidden = false;
     this.element.classList.remove('is-visible');
     void this.element.offsetWidth;

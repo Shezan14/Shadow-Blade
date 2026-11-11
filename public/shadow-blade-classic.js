@@ -40749,8 +40749,7 @@ void main() {
       this.musicMode = "exploration";
       this.musicFade = null;
       this.swordSounds = typeof Audio !== "undefined" ? ["sword-swing-1.ogg", "sword-swing-2.ogg", "sword-swing-3.ogg"].map((file) => new Audio(asset(file))) : [];
-      this.enemyBarks = typeof Audio !== "undefined" ? ["enemy-bark-1.ogg", "enemy-bark-2.ogg"].map((file) => new Audio(asset(file))) : [];
-      this.bossBark = typeof Audio !== "undefined" ? new Audio(asset("boss-bark.ogg")) : null;
+      this.dialogueVoices = typeof Audio !== "undefined" ? ["enemy-taunt-alert.wav", "enemy-taunt-threat.wav"].map((file) => new Audio(asset(file))) : [];
       Object.values(this.musicTracks).forEach((track) => {
         track.loop = true;
         track.volume = 0;
@@ -40760,14 +40759,10 @@ void main() {
         sound.volume = 0.48;
         sound.preload = "auto";
       });
-      this.enemyBarks.forEach((sound) => {
-        sound.volume = 0.38;
+      this.dialogueVoices.forEach((sound) => {
+        sound.volume = 0.68;
         sound.preload = "auto";
       });
-      if (this.bossBark) {
-        this.bossBark.volume = 0.52;
-        this.bossBark.preload = "auto";
-      }
     }
     async unlock() {
       if (!this.available) return false;
@@ -40819,10 +40814,9 @@ void main() {
       this.swordSounds.forEach((sound) => {
         sound.muted = this.muted;
       });
-      this.enemyBarks.forEach((sound) => {
+      this.dialogueVoices.forEach((sound) => {
         sound.muted = this.muted;
       });
-      if (this.bossBark) this.bossBark.muted = this.muted;
       if (this.master && this.context) {
         this.master.gain.cancelScheduledValues(this.context.currentTime);
         this.master.gain.setTargetAtTime(this.muted ? 0 : 0.34, this.context.currentTime, 0.025);
@@ -40895,9 +40889,9 @@ void main() {
       this.tone({ frequency: 160 + combo * 25, endFrequency: 58, duration: 0.1, volume: 0.11, type: "square", delay: 0.025 });
       return started;
     }
-    bark(boss = false) {
+    dialogue(index = 0) {
       if (this.muted) return false;
-      const sample = boss ? this.bossBark : this.enemyBarks[Math.floor(Math.random() * this.enemyBarks.length)];
+      const sample = this.dialogueVoices[index % this.dialogueVoices.length];
       if (!sample) return false;
       const voice = sample.cloneNode();
       voice.volume = sample.volume;
@@ -40983,21 +40977,12 @@ void main() {
 
   // src/ui/BattleDialogue.js
   var BOSS_LINES = Object.freeze([
-    "Is that all the strength you have?",
-    "You run, but the shadows always follow.",
-    "Are you tired, little blade?",
-    "Stand and face your end.",
-    "Your fear is louder than your sword.",
-    "Every step brings you closer to the abyss.",
-    "Your little flames cannot warm this tomb.",
-    "Kneel, and I may grant you silence.",
-    "The veil remembers every fallen hero."
+    { line: "I will kill you!", voice: 1 },
+    { line: "Hey!", voice: 0 }
   ]);
   var ENEMY_LINES = Object.freeze([
-    "Break their guard!",
-    "The blade is ours!",
-    "Do not let them pass!",
-    "Corner the intruder!"
+    { line: "Hey!", voice: 0 },
+    { line: "I will kill you!", voice: 1 }
   ]);
   var BattleDialogue = class {
     constructor(root = document, audio2 = null) {
@@ -41010,11 +40995,11 @@ void main() {
       this.hideTimer = null;
       this.audio = audio2;
     }
-    say(speaker, line) {
+    say(speaker, dialogue) {
       var _a3;
-      (_a3 = this.audio) == null ? void 0 : _a3.bark(speaker !== "CORRUPTED SENTINEL");
+      (_a3 = this.audio) == null ? void 0 : _a3.dialogue(dialogue.voice);
       this.speaker.textContent = speaker;
-      this.line.textContent = line;
+      this.line.textContent = dialogue.line;
       this.element.hidden = false;
       this.element.classList.remove("is-visible");
       void this.element.offsetWidth;

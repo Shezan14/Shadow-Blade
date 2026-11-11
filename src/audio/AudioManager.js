@@ -22,14 +22,12 @@ export class AudioManager {
     this.swordSounds = typeof Audio !== 'undefined'
       ? ['sword-swing-1.ogg', 'sword-swing-2.ogg', 'sword-swing-3.ogg'].map((file) => new Audio(asset(file)))
       : [];
-    this.enemyBarks = typeof Audio !== 'undefined'
-      ? ['enemy-bark-1.ogg', 'enemy-bark-2.ogg'].map((file) => new Audio(asset(file)))
+    this.dialogueVoices = typeof Audio !== 'undefined'
+      ? ['enemy-taunt-alert.wav', 'enemy-taunt-threat.wav'].map((file) => new Audio(asset(file)))
       : [];
-    this.bossBark = typeof Audio !== 'undefined' ? new Audio(asset('boss-bark.ogg')) : null;
     Object.values(this.musicTracks).forEach((track) => { track.loop = true; track.volume = 0; track.preload = 'auto'; });
     this.swordSounds.forEach((sound) => { sound.volume = 0.48; sound.preload = 'auto'; });
-    this.enemyBarks.forEach((sound) => { sound.volume = 0.38; sound.preload = 'auto'; });
-    if (this.bossBark) { this.bossBark.volume = 0.52; this.bossBark.preload = 'auto'; }
+    this.dialogueVoices.forEach((sound) => { sound.volume = 0.68; sound.preload = 'auto'; });
   }
 
   async unlock() {
@@ -79,8 +77,7 @@ export class AudioManager {
     this.muted = !this.muted;
     Object.values(this.musicTracks).forEach((track) => { track.muted = this.muted; if (!this.muted) void track.play().catch(() => {}); });
     this.swordSounds.forEach((sound) => { sound.muted = this.muted; });
-    this.enemyBarks.forEach((sound) => { sound.muted = this.muted; });
-    if (this.bossBark) this.bossBark.muted = this.muted;
+    this.dialogueVoices.forEach((sound) => { sound.muted = this.muted; });
     if (this.master && this.context) {
       this.master.gain.cancelScheduledValues(this.context.currentTime);
       this.master.gain.setTargetAtTime(this.muted ? 0 : 0.34, this.context.currentTime, 0.025);
@@ -149,9 +146,9 @@ export class AudioManager {
     return started;
   }
 
-  bark(boss = false) {
+  dialogue(index = 0) {
     if (this.muted) return false;
-    const sample = boss ? this.bossBark : this.enemyBarks[Math.floor(Math.random() * this.enemyBarks.length)];
+    const sample = this.dialogueVoices[index % this.dialogueVoices.length];
     if (!sample) return false;
     const voice = sample.cloneNode();
     voice.volume = sample.volume;
